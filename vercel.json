@@ -1,0 +1,14 @@
+{
+  "outputDirectory": "public",
+  "cleanUrls": true,
+  "trailingSlash": false,
+  "rewrites": [
+    { "source": "/admin", "destination": "/admin.html" },
+    { "source": "/profile", "destination": "/profile.html" },
+    { "source": "/step2-product", "destination": "/step2-product.html" },
+    { "source": "/step3-details", "destination": "/step3-details.html" },
+    { "source": "/success", "destination": "/success.html" },
+    { "source": "/add-product", "destination": "/add-product.html" },
+    { "source": "/registration-details", "destination": "/registration-details.html" }
+  ]
+}
