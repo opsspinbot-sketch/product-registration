@@ -1,0 +1,106 @@
+/* ═══════════════════════════════════════════════════════════════
+   SPINBOT — GOOGLE MATERIAL 3 USER PORTAL STYLES
+═══════════════════════════════════════════════════════════════ */
+
+.user-body {
+  background-color: var(--g-bg);
+  min-height: 100vh;
+  padding: 0 0 60px;
+}
+
+.portal-container {
+  max-width: 680px;
+  margin: 32px auto 0;
+  padding: 0 16px;
+}
+
+.brand-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 24px;
+}
+
+.card-container {
+  background-color: #ffffff;
+  border-radius: 24px;
+  border: 1px solid var(--g-border);
+  box-shadow: 0 1px 3px rgba(60,64,67,0.12);
+  overflow: hidden;
+  padding: 36px 32px;
+}
+
+.step-progress-bar {
+  height: 4px;
+  background: var(--spin-lime);
+  border-radius: 2px;
+}
+
+.step-indicator {
+  font-size: 12px;
+  font-weight: 500;
+  color: #1a73e8;
+  background: #e8f0fe;
+  padding: 4px 12px;
+  border-radius: 12px;
+  display: inline-block;
+  margin-bottom: 10px;
+}
+
+.step-title {
+  font-size: 24px;
+  font-weight: 400;
+  color: var(--g-text-dark);
+  margin: 0 0 6px;
+}
+
+.step-subtitle {
+  font-size: 14px;
+  color: var(--g-text-sub);
+  margin: 0 0 24px;
+}
+
+.form-group {
+  margin-bottom: 16px;
+}
+
+.form-label {
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--g-text-dark);
+  margin-bottom: 6px;
+  display: block;
+}
+
+.form-control, .form-select {
+  width: 100%;
+  height: 44px;
+  padding: 10px 14px;
+  border: 1px solid var(--g-border);
+  border-radius: 8px;
+  font-size: 14px;
+  color: var(--g-text-dark);
+  outline: none;
+  background: #ffffff;
+  transition: border-color 0.2s, box-shadow 0.2s;
+}
+
+.form-control:focus, .form-select:focus {
+  border-color: #1a73e8;
+  box-shadow: 0 0 0 2px rgba(26,115,232,0.2);
+}
+
+.file-dropzone {
+  border: 2px dashed var(--g-border);
+  border-radius: 12px;
+  padding: 24px;
+  text-align: center;
+  cursor: pointer;
+  background: var(--g-bg);
+  transition: all 0.2s;
+}
+
+.file-dropzone:hover {
+  border-color: #1a73e8;
+  background: #e8f0fe;
+}

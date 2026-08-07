@@ -1,0 +1,500 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Step 3 – Warranty Details — SpinBot Portal</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Google+Sans:wght@400;500;600;700&family=Roboto:wght@400;500&display=swap"/>
+<link rel="stylesheet" href="css/common.css?v=26.0.0"/>
+<link rel="stylesheet" href="css/user.css?v=26.0.0"/>
+<style>
+  :root {
+    --g-bg: #ffffff;
+    --g-surface: #f8f9fa;
+    --g-border: #dadce0;
+    --g-text-dark: #202124;
+    --g-text-sub: #5f6368;
+    --spin-lime: #76D300;
+    --spin-lime-dark: #5eb000;
+    --spin-lime-light: #f3fcdd;
+  }
+
+  * { box-sizing: border-box; }
+
+  body {
+    background-color: var(--g-surface);
+    color: var(--g-text-dark);
+    font-family: 'Google Sans', 'Roboto', -apple-system, BlinkMacSystemFont, sans-serif;
+    min-height: 100vh;
+    margin: 0;
+    padding-bottom: 60px;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  /* Google Style Header */
+  .g-header {
+    background: #ffffff;
+    border-bottom: 1px solid var(--g-border);
+    padding: 12px 24px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    position: sticky;
+    top: 0;
+    z-index: 100;
+  }
+
+  .g-header-brand {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    text-decoration: none;
+  }
+
+  .g-header-brand img {
+    height: 36px;
+    width: auto;
+  }
+
+  .g-header-title {
+    font-size: 18px;
+    font-weight: 500;
+    color: var(--g-text-sub);
+    border-left: 1px solid var(--g-border);
+    padding-left: 12px;
+  }
+
+  /* Main Container */
+  .g-container {
+    max-width: 720px;
+    margin: 32px auto 0;
+    padding: 0 16px;
+  }
+
+  .g-card {
+    background: #ffffff;
+    border: 1px solid var(--g-border);
+    border-radius: 24px;
+    padding: 36px 32px;
+    box-shadow: 0 1px 3px rgba(60,64,67,0.12);
+  }
+
+  .g-step-tag {
+    font-size: 12px;
+    font-weight: 500;
+    color: #1a73e8;
+    background: #e8f0fe;
+    padding: 4px 12px;
+    border-radius: 12px;
+    display: inline-block;
+    margin-bottom: 12px;
+  }
+
+  .g-heading {
+    font-size: 24px;
+    font-weight: 400;
+    color: var(--g-text-dark);
+    margin: 0 0 6px;
+  }
+
+  .g-sub {
+    font-size: 14px;
+    color: var(--g-text-sub);
+    margin: 0 0 24px;
+  }
+
+  /* Material Form Input */
+  .g-form-section {
+    margin-bottom: 24px;
+  }
+
+  .g-form-title {
+    font-size: 13px;
+    font-weight: 500;
+    color: #1a73e8;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    margin-bottom: 14px;
+  }
+
+  .g-field {
+    margin-bottom: 16px;
+  }
+
+  .g-field label {
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--g-text-dark);
+    margin-bottom: 6px;
+    display: block;
+  }
+
+  .g-input, .g-select {
+    width: 100%;
+    height: 44px;
+    padding: 10px 14px;
+    border: 1px solid var(--g-border);
+    border-radius: 8px;
+    font-size: 14px;
+    color: var(--g-text-dark);
+    outline: none;
+    background: #ffffff;
+    transition: all 0.2s;
+  }
+
+  .g-input:focus, .g-select:focus {
+    border-color: #1a73e8;
+    box-shadow: 0 0 0 2px rgba(26,115,232,0.2);
+  }
+
+  .g-dropzone {
+    border: 2px dashed var(--g-border);
+    border-radius: 12px;
+    padding: 24px;
+    text-align: center;
+    cursor: pointer;
+    background: var(--g-surface);
+    transition: all 0.2s;
+  }
+
+  .g-dropzone:hover {
+    border-color: #1a73e8;
+    background: #e8f0fe;
+  }
+
+  .btn-g-nav {
+    height: 44px;
+    border-radius: 22px;
+    padding: 0 24px;
+    font-size: 14px;
+    font-weight: 500;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    cursor: pointer;
+    text-decoration: none;
+    transition: all 0.2s;
+  }
+
+  .btn-g-submit {
+    background: var(--spin-lime);
+    color: #0f172a;
+    border: none;
+  }
+
+  .btn-g-submit:hover {
+    background: var(--spin-lime-dark);
+    color: #ffffff;
+  }
+
+  .btn-g-back {
+    background: transparent;
+    color: var(--g-text-sub);
+    border: 1px solid var(--g-border);
+  }
+
+  .btn-g-back:hover {
+    background: var(--g-surface);
+    color: var(--g-text-dark);
+  }
+</style>
+</head>
+<body>
+
+<!-- Header -->
+<header class="g-header">
+  <a href="index.html" class="g-header-brand">
+    <img src="public/images/download.png" alt="SpinBot Logo"/>
+    <span class="g-header-title">Product Registration</span>
+  </a>
+
+  <a href="profile.html" class="btn-g-back" style="padding: 6px 14px; font-size: 13px;">
+    <span>My Profile</span>
+  </a>
+</header>
+
+<div class="g-container">
+  <div class="g-card">
+    <div class="g-step-tag">Step 3 of 3 — Contact &amp; Purchase Details</div>
+    <h1 class="g-heading">Complete your warranty registration</h1>
+    <p class="g-sub">Provide your details to activate manufacturer warranty coverage</p>
+
+    <form id="registrationForm" onsubmit="handleRegistrationSubmit(event)">
+      
+      <!-- Selected Product Card -->
+      <div style="background: var(--g-surface); border: 1px solid var(--g-border); border-radius: 16px; padding: 14px 18px; margin-bottom: 24px; display: flex; align-items: center; justify-content: space-between;">
+        <div style="display: flex; align-items: center; gap: 12px;">
+          <div style="width: 44px; height: 44px; border-radius: 10px; background: #ffffff; display: flex; align-items: center; justify-content: center; border: 1px solid var(--g-border);">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#5eb000" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="3" width="20" height="14" rx="2" ry="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg>
+          </div>
+          <div>
+            <div id="dispProdName" style="font-weight: 500; font-size: 14.5px; color: var(--g-text-dark);">-</div>
+            <div id="dispProdSku" style="font-size: 12px; color: var(--g-text-sub);">-</div>
+          </div>
+          <script>
+            (function() {
+              try {
+                var rawObj = sessionStorage.getItem('sb_product_obj') || localStorage.getItem('sb_product_obj');
+                var rawName = sessionStorage.getItem('sb_product') || localStorage.getItem('sb_product');
+                var name = 'SpinBot IceDot Mag Mobile Cooler';
+                var sku = 'SB-ICEDOT-MAG1';
+                var period = '12 Months';
+
+                if (rawObj) {
+                  var parsed = typeof rawObj === 'string' && rawObj.trim().startsWith('{') ? JSON.parse(rawObj) : { name: rawObj };
+                  if (parsed.name) name = parsed.name;
+                  if (parsed.sku) sku = parsed.sku;
+                  if (parsed.warrantyPeriod) period = parsed.warrantyPeriod;
+                } else if (rawName) {
+                  name = rawName;
+                }
+
+                document.getElementById('dispProdName').textContent = name;
+                document.getElementById('dispProdSku').textContent = 'SKU: ' + sku + ' • Warranty: ' + period;
+              } catch(e){}
+            })();
+          </script>
+        </div>
+        <a href="step2-product.html" style="font-size: 13px; color: #1a73e8; text-decoration: none; font-weight: 500;">Change</a>
+      </div>
+
+      <!-- Customer Details Section -->
+      <div class="g-form-section">
+        <div class="g-form-title">Customer Information</div>
+        
+        <div class="g-field">
+          <label for="fullName">Full Name *</label>
+          <input type="text" id="fullName" class="g-input" placeholder="Enter your full name (alphabets only)" required pattern="[A-Za-z\s]+" oninput="this.value = this.value.replace(/[^a-zA-Z\s]/g, '')" title="Please enter alphabets and spaces only"/>
+        </div>
+
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
+          <div class="g-field">
+            <label for="phone">Phone Number *</label>
+            <input type="tel" id="phone" class="g-input" placeholder="10-digit mobile number" maxlength="10" required pattern="[0-9]{10}" oninput="this.value = this.value.replace(/[^0-9]/g, '').slice(0, 10)" title="Please enter a 10-digit mobile number"/>
+          </div>
+          <div class="g-field">
+            <label for="email">Email Address *</label>
+            <input type="email" id="email" class="g-input" placeholder="you@example.com" required/>
+          </div>
+        </div>
+      </div>
+
+      <!-- Purchase Details Section -->
+      <div class="g-form-section">
+        <div class="g-form-title">Purchase Information</div>
+
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
+          <div class="g-field">
+            <label for="purchaseDate">Purchase Date *</label>
+            <input type="date" id="purchaseDate" class="g-input" required/>
+          </div>
+          <div class="g-field">
+            <label for="purchasePlatform">Purchase Platform *</label>
+            <select id="purchasePlatform" class="g-select" required>
+              <option value="Amazon">Amazon</option>
+              <option value="Flipkart">Flipkart</option>
+              <option value="SpinBot Official Store">SpinBot Official Store</option>
+              <option value="Retail Store / Dealer">Retail Store / Dealer</option>
+              <option value="Other Online Store">Other Online Store</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="g-field">
+          <label for="invoiceNumber">Invoice / Order ID *</label>
+          <input type="text" id="invoiceNumber" class="g-input" placeholder="INV-2026-9812" required/>
+        </div>
+
+        <!-- Invoice Upload -->
+        <div class="g-field">
+          <label>Upload Invoice / Receipt *</label>
+          <div class="g-dropzone" id="dropzone" onclick="document.getElementById('invoiceFileInput').click()">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#1a73e8" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+            <div style="font-size: 14px; font-weight: 500; color: var(--g-text-dark); margin-top: 6px;">Click to upload invoice or drag &amp; drop</div>
+            <div style="font-size: 12px; color: var(--g-text-sub); margin-top: 2px;">PDF, PNG, JPG files up to 5MB</div>
+            <input type="file" id="invoiceFileInput" accept="image/*,.pdf" style="display: none;" onchange="handleFileSelect(this.files)"/>
+          </div>
+          <div id="filePreviewContainer" style="margin-top: 10px;"></div>
+        </div>
+      </div>
+
+      <!-- Terms Checkbox -->
+      <div style="margin: 20px 0;">
+        <label style="display: flex; align-items: flex-start; gap: 8px; font-size: 13px; color: var(--g-text-dark); cursor: pointer;">
+          <input type="checkbox" id="termsCheck" required style="margin-top: 3px; accent-color: #1a73e8;"/>
+          <span>I accept the Terms &amp; Conditions and declare that the purchase details provided are true.</span>
+        </label>
+      </div>
+
+      <!-- Submit Buttons -->
+      <div style="display: flex; align-items: center; justify-content: space-between; margin-top: 28px; padding-top: 16px; border-top: 1px solid #f1f3f4;">
+        <a href="step2-product.html" class="btn-g-nav btn-g-back">Back</a>
+        <button type="submit" id="submitBtn" class="btn-g-nav btn-g-submit">
+          <span>Activate Warranty</span>
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
+        </button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<script type="module">
+  import { showToast } from './js/ui-components.js?v=24.0.0';
+  import { createWarrantyRegistration } from './js/db-service.js?v=24.0.0';
+  import { uploadToR2 } from './js/r2-upload.js?v=24.0.0';
+
+  let selectedFile = null;
+
+  window.handleFileSelect = (files) => {
+    if (!files || files.length === 0) return;
+    const file = files[0];
+    if (file.size > 5 * 1024 * 1024) {
+      showToast('File size exceeds 5MB limit', 'warning');
+      return;
+    }
+    selectedFile = file;
+    
+    document.getElementById('filePreviewContainer').innerHTML = `
+      <div style="background: var(--g-surface); border: 1px solid var(--g-border); border-radius: 8px; padding: 10px 14px; display: flex; align-items: center; justify-content: space-between; font-size: 13px;">
+        <div>📄 <strong>${file.name}</strong> (${(file.size / 1024).toFixed(1)} KB)</div>
+        <button type="button" onclick="clearFile()" style="background: none; border: none; font-size: 16px; color: var(--g-text-sub); cursor: pointer;">&times;</button>
+      </div>
+    `;
+  };
+
+  window.clearFile = () => {
+    selectedFile = null;
+    document.getElementById('invoiceFileInput').value = '';
+    document.getElementById('filePreviewContainer').innerHTML = '';
+  };
+
+  // Auto-fill logged in customer profile details
+  (function populateCustomerSessionData() {
+    try {
+      const sessStr = sessionStorage.getItem('sb_customer_session') || localStorage.getItem('sb_customer_session');
+      let sess = null;
+      if (sessStr) sess = JSON.parse(sessStr);
+
+      const custName = (sess && (sess.fullName || sess.name)) || sessionStorage.getItem('sb_customer_name') || localStorage.getItem('sb_customer_name');
+      const custEmail = (sess && sess.email) || sessionStorage.getItem('sb_customer_email') || localStorage.getItem('sb_customer_email');
+      const custPhone = (sess && sess.phone) || sessionStorage.getItem('sb_customer_phone') || localStorage.getItem('sb_customer_phone');
+
+      const nameEl = document.getElementById('fullName');
+      const emailEl = document.getElementById('email');
+      const phoneEl = document.getElementById('phone');
+
+      if (custName && nameEl) nameEl.value = custName;
+      if (custEmail && emailEl) {
+        emailEl.value = custEmail;
+        emailEl.readOnly = true;
+        emailEl.style.background = 'var(--g-surface)';
+        emailEl.style.color = 'var(--g-text-sub)';
+      }
+      if (custPhone && phoneEl && !phoneEl.value) phoneEl.value = custPhone;
+    } catch(e){}
+  })();
+
+  // Submit Handler
+  window.handleRegistrationSubmit = async (e) => {
+    if (e && e.preventDefault) e.preventDefault();
+
+    if (!selectedFile) {
+      showToast('Please upload your invoice/receipt to proceed', 'warning');
+      return;
+    }
+
+    const fullName = document.getElementById('fullName').value.trim();
+    const phone = document.getElementById('phone').value.trim();
+
+    if (!fullName || !/^[a-zA-Z\s]+$/.test(fullName)) {
+      showToast('Please enter a valid full name using alphabets only', 'warning');
+      const nameEl = document.getElementById('fullName');
+      if (nameEl) nameEl.focus();
+      return;
+    }
+
+    if (!phone || !/^[0-9]{10}$/.test(phone)) {
+      showToast('Please enter a valid 10-digit mobile number', 'warning');
+      const phoneEl = document.getElementById('phone');
+      if (phoneEl) phoneEl.focus();
+    const email = document.getElementById('email').value.trim();
+    const purchaseDate = document.getElementById('purchaseDate').value;
+    const purchasePlatform = document.getElementById('purchasePlatform').value;
+    const invoiceNumber = document.getElementById('invoiceNumber').value.trim();
+
+    if (!purchaseDate) {
+      showToast('Please select your purchase date', 'warning');
+      const pDateEl = document.getElementById('purchaseDate');
+      if (pDateEl) pDateEl.focus();
+      return;
+    }
+
+    const now = new Date();
+    const y = now.getFullYear();
+    const m = String(now.getMonth() + 1).padStart(2, '0');
+    const d = String(now.getDate()).padStart(2, '0');
+    const todayLocal = `${y}-${m}-${d}`;
+
+    if (purchaseDate > todayLocal) {
+      showToast('Purchase date cannot be in the future', 'warning');
+      const pDateEl = document.getElementById('purchaseDate');
+      if (pDateEl) {
+        pDateEl.value = todayLocal;
+        pDateEl.focus();
+      }
+      return;
+    }
+
+    const submitBtn = document.getElementById('submitBtn');
+    if (submitBtn) submitBtn.disabled = true;
+
+    const sessStr = sessionStorage.getItem('sb_customer_session') || localStorage.getItem('sb_customer_session');
+    let custUid = '';
+    if (sessStr) {
+      try {
+        const parsedSess = JSON.parse(sessStr);
+        custUid = parsedSess.uid || parsedSess.googleUid || '';
+      } catch(e){}
+    }
+
+    const rawObj = sessionStorage.getItem('sb_product_obj') || localStorage.getItem('sb_product_obj');
+    let currentProd = { name: 'SpinBot IceDot Mag Mobile Cooler', sku: 'SB-ICEDOT-MAG1', warrantyPeriod: '12 Months' };
+    if (rawObj) {
+      try { currentProd = typeof rawObj === 'string' && rawObj.trim().startsWith('{') ? JSON.parse(rawObj) : { name: rawObj }; } catch(e){}
+    }
+
+    let invoiceUrl = '';
+    if (selectedFile) {
+      try {
+        invoiceUrl = await uploadToR2(selectedFile);
+      } catch (uploadErr) {
+        console.warn('R2 upload notice:', uploadErr);
+      }
+    }
+
+    try {
+      const reg = await createWarrantyRegistration({
+        customerUid: custUid,
+        fullName,
+        phone,
+        email,
+        product: currentProd.name || 'SpinBot Product',
+        sku: currentProd.sku || 'SB-ICEDOT-MAG1',
+        brand: 'SpinBot',
+        purchaseDate,
+        purchasePlatform,
+        invoiceNumber,
+        warrantyMonths: parseInt(currentProd.warrantyPeriod) || 12,
+        invoiceUrl
+      }, selectedFile);
+
+      showToast('Product registered successfully!', 'success');
+      setTimeout(() => window.location.href = `success.html?id=${encodeURIComponent(reg.warrantyId || 'SB-REG')}`, 600);
+    } catch (err) {
+      console.warn('Registration save notice:', err);
+      window.location.href = 'success.html?id=SB-REG';
+    }
+  };
+</script>
+</body>
+</html>

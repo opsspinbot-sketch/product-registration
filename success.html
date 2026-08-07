@@ -1,0 +1,403 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Registration Active — SpinBot Portal</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Google+Sans:wght@400;500;600;700&family=Roboto:wght@400;500&display=swap"/>
+<link rel="stylesheet" href="css/common.css?v=26.0.0"/>
+<link rel="stylesheet" href="css/user.css?v=26.0.0"/>
+<style>
+  :root {
+    --g-bg: #ffffff;
+    --g-surface: #f8f9fa;
+    --g-border: #dadce0;
+    --g-text-dark: #202124;
+    --g-text-sub: #5f6368;
+    --spin-lime: #76D300;
+    --spin-lime-dark: #5eb000;
+  }
+
+  * { box-sizing: border-box; }
+
+  body {
+    background-color: var(--g-surface);
+    color: var(--g-text-dark);
+    font-family: 'Google Sans', 'Roboto', -apple-system, BlinkMacSystemFont, sans-serif;
+    min-height: 100vh;
+    margin: 0;
+    padding-bottom: 60px;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  /* Header */
+  .g-header {
+    background: #ffffff;
+    border-bottom: 1px solid var(--g-border);
+    padding: 12px 24px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    position: sticky;
+    top: 0;
+    z-index: 100;
+  }
+
+  .g-header-brand {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    text-decoration: none;
+  }
+
+  .g-header-brand img {
+    height: 36px;
+    width: auto;
+  }
+
+  .g-header-title {
+    font-size: 18px;
+    font-weight: 500;
+    color: var(--g-text-sub);
+    border-left: 1px solid var(--g-border);
+    padding-left: 12px;
+  }
+
+  /* Main Container */
+  .g-container {
+    max-width: 680px;
+    margin: 32px auto 0;
+    padding: 0 16px;
+  }
+
+  .g-card {
+    background: #ffffff;
+    border: 1px solid var(--g-border);
+    border-radius: 24px;
+    padding: 36px;
+    box-shadow: 0 1px 3px rgba(60,64,67,0.12);
+    margin-bottom: 24px;
+  }
+
+  /* Success Check Banner */
+  .g-success-circle {
+    width: 64px;
+    height: 64px;
+    border-radius: 50%;
+    background: #e6f4ea;
+    color: #137333;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0 auto 16px;
+  }
+
+  .g-title {
+    font-size: 24px;
+    font-weight: 400;
+    color: var(--g-text-dark);
+    text-align: center;
+    margin: 0 0 6px;
+  }
+
+  .g-sub {
+    font-size: 14px;
+    color: var(--g-text-sub);
+    text-align: center;
+    margin: 0 0 24px;
+  }
+
+  /* Registration ID Box */
+  .g-id-box {
+    background: var(--g-surface);
+    border: 1px solid var(--g-border);
+    border-radius: 16px;
+    padding: 16px 20px;
+    text-align: center;
+    margin-bottom: 24px;
+  }
+
+  .g-id-val {
+    font-family: monospace;
+    font-size: 20px;
+    font-weight: 500;
+    color: #137333;
+    letter-spacing: 0.05em;
+  }
+
+  /* Stepper */
+  .g-step-row {
+    display: flex;
+    align-items: flex-start;
+    gap: 14px;
+    padding: 12px 16px;
+    border-radius: 12px;
+    background: #e6f4ea;
+    border: 1px solid #ceead6;
+    margin-bottom: 10px;
+  }
+
+  .g-step-check {
+    width: 24px;
+    height: 24px;
+    border-radius: 50%;
+    background: #137333;
+    color: #ffffff;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 13px;
+    font-weight: bold;
+    flex-shrink: 0;
+    margin-top: 2px;
+  }
+
+  .g-step-title {
+    font-size: 14px;
+    font-weight: 500;
+    color: #065f46;
+  }
+
+  .g-step-desc {
+    font-size: 12.5px;
+    color: #047857;
+  }
+
+  .btn-g-nav {
+    height: 44px;
+    border-radius: 22px;
+    padding: 0 24px;
+    font-size: 14px;
+    font-weight: 500;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    cursor: pointer;
+    text-decoration: none;
+    transition: all 0.2s;
+  }
+
+  .btn-g-primary {
+    background: var(--spin-lime);
+    color: #0f172a;
+    border: none;
+  }
+
+  .btn-g-primary:hover {
+    background: var(--spin-lime-dark);
+    color: #ffffff;
+  }
+
+  .btn-g-outlined {
+    background: transparent;
+    color: var(--g-text-sub);
+    border: 1px solid var(--g-border);
+  }
+
+  .btn-g-outlined:hover {
+    background: var(--g-surface);
+    color: var(--g-text-dark);
+  }
+</style>
+</head>
+<body>
+
+<!-- Header -->
+<header class="g-header">
+  <a href="index.html" class="g-header-brand">
+    <img src="public/images/download.png" alt="SpinBot Logo"/>
+    <span class="g-header-title">Registration Active</span>
+  </a>
+
+  <a href="profile.html" class="btn-g-outlined" style="padding: 6px 14px; font-size: 13px;">
+    <span>My Profile</span>
+  </a>
+</header>
+
+<div class="g-container">
+  <!-- Card 1: Success Banner -->
+  <div class="g-card">
+    <div class="g-success-circle">
+      <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+    </div>
+
+    <h1 class="g-title">Registration Completed!</h1>
+    <p class="g-sub">Hi <span id="displayFullName">Customer</span>, your SpinBot device warranty is officially activated</p>
+
+    <!-- Registration ID -->
+    <div class="g-id-box">
+      <div style="font-size: 12px; color: var(--g-text-sub); text-transform: uppercase; font-weight: 500; margin-bottom: 4px;">Official Registration ID</div>
+      <div id="displayWarrantyId" class="g-id-val">SB-REG-1049</div>
+    </div>
+
+    <!-- Product Summary Grid -->
+    <div style="background: var(--g-surface); border-radius: 12px; padding: 14px 18px; font-size: 13px; margin-bottom: 20px;">
+      <div style="display: flex; justify-content: space-between; margin-bottom: 6px;">
+        <span style="color: var(--g-text-sub);">Registered Product:</span>
+        <span id="displayProductName" style="font-weight: 500; color: var(--g-text-dark);">SpinBot IceDot Mag Mobile Cooler</span>
+      </div>
+      <div style="display: flex; justify-content: space-between; margin-bottom: 6px;">
+        <span style="color: var(--g-text-sub);">SKU:</span>
+        <span id="displaySku" style="font-family: monospace;">SB-ICEDOT-MAG1</span>
+      </div>
+      <div style="display: flex; justify-content: space-between; margin-bottom: 6px;">
+        <span style="color: var(--g-text-sub);">Coverage Plan:</span>
+        <span id="displayWarrantyDuration" style="font-weight: 500;">12 Months Warranty</span>
+      </div>
+      <div style="display: flex; justify-content: space-between;">
+        <span style="color: var(--g-text-sub);">Valid Until:</span>
+        <span id="displayValidUntil" style="color: #137333; font-weight: 500;">01 August 2027</span>
+      </div>
+    </div>
+
+    <!-- Dedicated Warranty Progress Card Box -->
+    <div id="successProgressCard" style="background: #f4fbf0; border: 1px solid #d2f2b0; border-radius: 16px; padding: 16px 18px; margin-bottom: 24px;">
+      <div style="display: flex; justify-content: space-between; align-items: center; font-size: 13px; margin-bottom: 8px;">
+        <span style="color: var(--g-text-dark); font-weight: 500; display: flex; align-items: center; gap: 6px;">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#5eb000" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+          Warranty Progress &amp; Remaining Coverage
+        </span>
+        <span id="progressMonthsBadge" style="color: #137333; font-weight: 600; font-size: 12px; background: #e6f4ea; padding: 2px 10px; border-radius: 12px;">12 Months (365 Days left)</span>
+      </div>
+
+      <div style="height: 10px; width: 100%; background: #e2f4c9; border-radius: 10px; overflow: hidden; margin-bottom: 12px;">
+        <div id="progressBarFill" style="height: 100%; width: 100%; background: linear-gradient(90deg, #5eb000, #76D300); border-radius: 10px; transition: width 0.4s ease;"></div>
+      </div>
+
+      <div style="display: flex; justify-content: space-between; align-items: center; font-size: 12px; color: var(--g-text-sub);">
+        <div>
+          <span style="display: block; font-size: 10px; text-transform: uppercase; color: #70757a; font-weight: 500;">Purchase Date</span>
+          <span id="displayStartDate" style="font-weight: 500; color: var(--g-text-dark);">Today</span>
+        </div>
+        <div style="text-align: right;">
+          <span style="display: block; font-size: 10px; text-transform: uppercase; color: #70757a; font-weight: 500;">Valid Until</span>
+          <span id="displayValidUntilDate" style="font-weight: 500; color: #137333;">01 Aug 2027</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- All Green Ticks Stepper -->
+    <div style="margin-bottom: 24px;">
+      <div style="font-size: 14px; font-weight: 500; color: var(--g-text-dark); margin-bottom: 12px;">Activation Status</div>
+
+      <div class="g-step-row">
+        <div class="g-step-check">✓</div>
+        <div>
+          <div class="g-step-title">Step 1 — Registration Submitted</div>
+          <div class="g-step-desc">Your product details have been recorded.</div>
+        </div>
+      </div>
+
+      <div class="g-step-row">
+        <div class="g-step-check">✓</div>
+        <div>
+          <div class="g-step-title">Step 2 — Details Verified</div>
+          <div class="g-step-desc">Purchase details and product model matched.</div>
+        </div>
+      </div>
+
+      <div class="g-step-row">
+        <div class="g-step-check">✓</div>
+        <div>
+          <div class="g-step-title">Step 3 — Registration Approved</div>
+          <div class="g-step-desc">Official SpinBot warranty registration approved.</div>
+        </div>
+      </div>
+
+      <div class="g-step-row">
+        <div class="g-step-check">✓</div>
+        <div>
+          <div class="g-step-title">Step 4 — Warranty Officially Active</div>
+          <div class="g-step-desc">Your manufacturer warranty is fully active starting today.</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Action Buttons -->
+    <div style="display: flex; flex-direction: column; gap: 10px;">
+      <a href="profile.html" class="btn-g-nav btn-g-primary">
+        <span>Go to My Profile &amp; Devices</span>
+      </a>
+      <button onclick="copyRegId()" class="btn-g-nav btn-g-outlined">
+        <span>Copy Registration ID</span>
+      </button>
+    </div>
+  </div>
+</div>
+
+<script type="module">
+  import { showToast } from './js/ui-components.js?v=24.0.0';
+  import { getRegistrations } from './js/db-service.js?v=24.0.0';
+
+  async function initSuccessScreen() {
+    const urlParams = new URLSearchParams(window.location.search);
+    const regId = urlParams.get('id');
+
+    let reg = window._lastRegResult;
+    if (!reg && regId) {
+      try {
+        const list = await getRegistrations();
+        reg = list.find(r => (r.warrantyId && r.warrantyId.toLowerCase() === regId.toLowerCase()) || r.id === regId);
+      } catch (e) {}
+    }
+
+    if (reg) {
+      if (document.getElementById('displayWarrantyId')) document.getElementById('displayWarrantyId').innerText = reg.warrantyId || regId || 'SB-REG-1049';
+      if (document.getElementById('displayFullName')) document.getElementById('displayFullName').innerText = reg.fullName || 'Customer';
+      if (document.getElementById('displayProductName')) document.getElementById('displayProductName').innerText = reg.product || 'SpinBot Product';
+      if (document.getElementById('displaySku')) document.getElementById('displaySku').innerText = reg.sku || 'SB-ICEDOT-MAG1';
+      if (document.getElementById('displayWarrantyDuration')) document.getElementById('displayWarrantyDuration').innerText = reg.warrantyPeriod || '12 Months Warranty';
+      if (document.getElementById('displayValidUntil')) document.getElementById('displayValidUntil').innerText = reg.endDate || 'Active';
+      if (document.getElementById('displayStartDate')) document.getElementById('displayStartDate').innerText = reg.purchaseDate || 'Today';
+      if (document.getElementById('displayValidUntilDate')) document.getElementById('displayValidUntilDate').innerText = reg.endDate || 'Active';
+
+      const totalMonths = parseInt(reg.warrantyPeriod) || 12;
+      const totalDays = totalMonths * 30;
+      let daysLeft = 365;
+      if (reg.daysRemaining !== undefined && reg.daysRemaining !== null) {
+        daysLeft = parseInt(reg.daysRemaining);
+      } else if (reg.endDate) {
+        daysLeft = Math.ceil((new Date(reg.endDate).getTime() - Date.now()) / (1000 * 60 * 60 * 24));
+      }
+
+      const isExpired = daysLeft <= 0;
+      const monthsLeft = isExpired ? 0 : Math.ceil(daysLeft / 30);
+      const progressWidth = isExpired ? 0 : Math.min(100, Math.max(5, (daysLeft / totalDays) * 100));
+
+      const badge = document.getElementById('progressMonthsBadge');
+      const bar = document.getElementById('progressBarFill');
+
+      if (badge) {
+        if (isExpired) {
+          badge.innerText = '0 Months (Expired)';
+          badge.style.color = '#c5221f';
+          badge.style.background = '#fce8e6';
+        } else {
+          badge.innerText = `${monthsLeft} Month${monthsLeft !== 1 ? 's' : ''} (${daysLeft} Days left)`;
+          badge.style.color = '#137333';
+          badge.style.background = '#e6f4ea';
+        }
+      }
+
+      if (bar) {
+        bar.style.width = `${progressWidth}%`;
+        if (isExpired) bar.style.background = '#d93025';
+      }
+    } else if (regId) {
+      if (document.getElementById('displayWarrantyId')) document.getElementById('displayWarrantyId').innerText = regId;
+    }
+  }
+
+  window.copyRegId = () => {
+    const el = document.getElementById('displayWarrantyId');
+    if (el && el.innerText) {
+      navigator.clipboard.writeText(el.innerText);
+      showToast(`Copied ${el.innerText} to clipboard!`, 'success');
+    }
+  };
+
+  initSuccessScreen();
+</script>
+</body>
+</html>

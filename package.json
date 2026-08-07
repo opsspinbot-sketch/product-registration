@@ -1,0 +1,18 @@
+{
+  "dependencies": {
+    "firebase": "^12.14.0",
+    "git": "^0.1.5"
+  },
+  "name": "warranty",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "start": "npx -y serve .",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "module"
+}
