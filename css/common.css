@@ -1,0 +1,276 @@
+/* ═══════════════════════════════════════════════════════════════
+   SPINBOT — GOOGLE MATERIAL 3 COMMON DESIGN SYSTEM
+   Clean Light Surface • Google Sans Typography • Material Tokens
+═══════════════════════════════════════════════════════════════ */
+@import url('https://fonts.googleapis.com/css2?family=Google+Sans:wght@400;500;600;700&family=Roboto:wght@400;500;700&display=swap');
+
+:root {
+  /* Google Core Tokens */
+  --g-bg: #f8f9fa;
+  --g-surface: #ffffff;
+  --g-border: #dadce0;
+  --g-text-dark: #202124;
+  --g-text-sub: #5f6368;
+  --g-blue: #1a73e8;
+  --g-blue-hover: #1557b0;
+  --g-blue-light: #e8f0fe;
+  --g-green: #137333;
+  --g-green-light: #e6f4ea;
+  --g-red: #c5221f;
+  --g-red-light: #fce8e6;
+
+  /* SpinBot Brand Accent */
+  --spin-lime: #76D300;
+  --spin-lime-dark: #5eb000;
+  --spin-lime-light: #f3fcdd;
+  --primary: #76D300;
+
+  /* Legacy mappings */
+  --bg-page: var(--g-bg);
+  --bg-card: var(--g-surface);
+  --border-color: var(--g-border);
+  --text-main: var(--g-text-dark);
+  --text-muted: var(--g-text-sub);
+
+  --font: 'Google Sans', 'Roboto', -apple-system, BlinkMacSystemFont, sans-serif;
+  --radius-sm: 8px;
+  --radius-md: 12px;
+  --radius-lg: 16px;
+  --radius-xl: 20px;
+  --radius-2xl: 24px;
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+html { scroll-behavior: smooth; }
+
+body {
+  font-family: 'Google Sans', 'Roboto', -apple-system, BlinkMacSystemFont, sans-serif;
+  background-color: var(--g-bg);
+  color: var(--g-text-dark);
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+}
+
+a {
+  color: var(--g-blue);
+  text-decoration: none;
+}
+a:hover { text-decoration: underline; }
+
+/* Google Material Buttons */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  height: 40px;
+  padding: 0 20px;
+  border-radius: 20px;
+  font-family: inherit;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  border: 1px solid transparent;
+  transition: all 0.2s ease;
+  text-decoration: none;
+}
+
+.btn-primary {
+  background: var(--spin-lime);
+  color: #0f172a;
+}
+.btn-primary:hover {
+  background: var(--spin-lime-dark);
+  color: #ffffff;
+}
+
+.btn-secondary {
+  background: transparent;
+  color: var(--g-text-sub);
+  border-color: var(--g-border);
+}
+.btn-secondary:hover {
+  background: var(--g-bg);
+  color: var(--g-text-dark);
+}
+
+.btn-danger {
+  background: var(--g-red-light);
+  color: var(--g-red);
+  border-color: transparent;
+}
+.btn-danger:hover {
+  background: var(--g-red);
+  color: #ffffff;
+}
+
+.btn-success {
+  background: var(--g-green-light);
+  color: var(--g-green);
+  border-color: transparent;
+}
+.btn-success:hover {
+  background: var(--g-green);
+  color: #ffffff;
+}
+
+.btn-sm {
+  height: 34px;
+  padding: 0 14px;
+  font-size: 13px;
+  border-radius: 17px;
+}
+
+.btn-lg {
+  height: 48px;
+  padding: 0 28px;
+  font-size: 15px;
+  border-radius: 24px;
+}
+
+/* Modal Dialog System (Google Material 3) */
+.modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(32, 33, 36, 0.6);
+  backdrop-filter: blur(4px);
+  z-index: 99999;
+  display: none;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+}
+
+.modal-overlay.active {
+  display: flex !important;
+  animation: fadeIn 0.2s ease-out forwards;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+.modal-card {
+  background: #ffffff;
+  border-radius: 24px;
+  width: 100%;
+  max-width: 560px;
+  max-height: 90vh;
+  display: flex;
+  flex-direction: column;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.18);
+  border: 1px solid var(--g-border);
+  overflow: hidden;
+  animation: slideUp 0.25s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+@keyframes slideUp {
+  from { transform: translateY(16px); opacity: 0; }
+  to { transform: translateY(0); opacity: 1; }
+}
+
+.modal-header {
+  padding: 20px 24px;
+  border-bottom: 1px solid var(--g-border);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: #ffffff;
+}
+
+.modal-title {
+  font-size: 18px;
+  font-weight: 600;
+  color: var(--g-text-dark);
+  margin: 0;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+}
+
+.modal-close {
+  background: transparent;
+  border: none;
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--g-text-sub);
+  cursor: pointer;
+  font-size: 20px;
+  transition: all 0.2s;
+  flex-shrink: 0;
+}
+
+.modal-close:hover {
+  background: var(--g-bg);
+  color: var(--g-text-dark);
+}
+
+.modal-body {
+  padding: 24px;
+  overflow-y: auto;
+  flex: 1;
+  color: var(--g-text-dark);
+  font-size: 14px;
+}
+
+.modal-footer {
+  padding: 16px 24px;
+  border-top: 1px solid var(--g-border);
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 12px;
+  background: #ffffff;
+}
+
+/* Toast Notification System (Google Material 3) */
+.toast-container {
+  position: fixed;
+  bottom: 24px;
+  right: 24px;
+  z-index: 999999;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  pointer-events: none;
+}
+
+.toast {
+  background: #322f35;
+  color: #f5f0f7;
+  padding: 12px 20px;
+  border-radius: 12px;
+  font-size: 14px;
+  font-weight: 500;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.2);
+  opacity: 0;
+  transform: translateY(12px);
+  transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+  pointer-events: auto;
+  max-width: 400px;
+}
+
+.toast.show {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+.toast-icon {
+  font-size: 20px;
+  flex-shrink: 0;
+}
+
+.toast-success .toast-icon { color: #81c995; }
+.toast-error .toast-icon { color: #f28b82; }
+.toast-warning .toast-icon { color: #fdd663; }
+.toast-info .toast-icon { color: #8ab4f8; }

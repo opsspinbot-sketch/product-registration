@@ -1,0 +1,12 @@
+name = "spinbot-upload"
+main = "index.js"
+compatibility_date = "2024-01-01"
+account_id = "f93d598c460f017ff96b893e15c72df8"
+
+# R2 bucket binding pointing directly to user's Cloudflare bucket: product-regstration
+[[r2_buckets]]
+binding = "INVOICES"
+bucket_name = "product-regstration"
+
+[vars]
+ALLOWED_ORIGIN = "*"

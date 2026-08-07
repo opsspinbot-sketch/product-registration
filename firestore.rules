@@ -1,0 +1,27 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    
+    // User Profiles Collection: Security Rule
+    // Only logged-in users can access their own document users/{userId}
+    // No user can read or write another user's profile
+    match /users/{userId} {
+      allow read, write: if request.auth != null && request.auth.uid == userId;
+    }
+    
+    // Legacy customer_profiles fallback
+    match /customer_profiles/{profileId} {
+      allow read, write: if request.auth != null;
+    }
+
+    // Warranty Registrations Collection
+    match /registrations/{registrationId} {
+      allow read, write: if request.auth != null;
+    }
+
+    // Support Tickets Collection
+    match /support/{ticketId} {
+      allow read, write: if true;
+    }
+  }
+}

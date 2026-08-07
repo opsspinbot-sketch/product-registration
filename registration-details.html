@@ -1,0 +1,588 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Registration Details — SpinBot Admin Console</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Google+Sans:wght@400;500;600;700&family=Roboto:wght@400;500&display=swap"/>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@2.44.0/tabler-icons.min.css"/>
+<link rel="stylesheet" href="./css/common.css?v=26.0.0"/>
+<link rel="stylesheet" href="./css/admin.css?v=26.0.0"/>
+<style>
+  :root {
+    --g-bg: #f8f9fa;
+    --g-surface: #ffffff;
+    --g-border: #dadce0;
+    --g-text-dark: #202124;
+    --g-text-sub: #5f6368;
+    --spin-lime: #76D300;
+    --spin-lime-dark: #5eb000;
+  }
+
+  * { box-sizing: border-box; }
+
+  body {
+    background-color: var(--g-bg);
+    color: var(--g-text-dark);
+    font-family: 'Google Sans', 'Roboto', -apple-system, BlinkMacSystemFont, sans-serif;
+    margin: 0;
+    padding-bottom: 60px;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  /* Header */
+  .g-header {
+    background: #ffffff;
+    border-bottom: 1px solid var(--g-border);
+    padding: 12px 24px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    position: sticky;
+    top: 0;
+    z-index: 100;
+  }
+
+  .g-header-left {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+
+  .g-header-title {
+    font-size: 18px;
+    font-weight: 500;
+    color: var(--g-text-dark);
+  }
+
+  .btn-g-outlined {
+    height: 38px;
+    border-radius: 19px;
+    padding: 0 16px;
+    font-size: 13.5px;
+    font-weight: 500;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    cursor: pointer;
+    text-decoration: none;
+    background: transparent;
+    color: var(--g-text-sub);
+    border: 1px solid var(--g-border);
+    transition: all 0.2s;
+  }
+
+  .btn-g-outlined:hover {
+    background: var(--g-bg);
+    color: var(--g-text-dark);
+  }
+
+  /* Layout Container */
+  .g-container {
+    max-width: 1060px;
+    margin: 28px auto 0;
+    padding: 0 20px;
+    display: grid;
+    grid-template-columns: 1fr 320px;
+    gap: 24px;
+  }
+
+  /* Tabs */
+  .g-tabs {
+    display: flex;
+    gap: 24px;
+    border-bottom: 1px solid var(--g-border);
+    margin-bottom: 24px;
+  }
+
+  .g-tab {
+    padding: 12px 0;
+    font-size: 14px;
+    font-weight: 500;
+    color: var(--g-text-sub);
+    border: none;
+    background: transparent;
+    cursor: pointer;
+    position: relative;
+    font-family: inherit;
+  }
+
+  .g-tab.active {
+    color: #1a73e8;
+    font-weight: 600;
+  }
+
+  .g-tab.active::after {
+    content: '';
+    position: absolute;
+    bottom: -1px;
+    left: 0;
+    right: 0;
+    height: 3px;
+    background: #1a73e8;
+    border-radius: 3px 3px 0 0;
+  }
+
+  .g-card {
+    background: #ffffff;
+    border: 1px solid var(--g-border);
+    border-radius: 20px;
+    padding: 28px;
+    box-shadow: 0 1px 3px rgba(60,64,67,0.1);
+    margin-bottom: 24px;
+  }
+
+  .g-product-card {
+    display: flex;
+    align-items: center;
+    gap: 18px;
+    background: #ffffff;
+    border: 1px solid var(--g-border);
+    border-radius: 16px;
+    padding: 20px;
+    margin-bottom: 24px;
+  }
+
+  .g-field-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 20px;
+  }
+
+  .g-field-label {
+    font-size: 12px;
+    font-weight: 500;
+    color: var(--g-text-sub);
+    margin-bottom: 4px;
+  }
+
+  .g-field-value {
+    font-size: 14.5px;
+    font-weight: 500;
+    color: var(--g-text-dark);
+  }
+
+  /* File Card */
+  .g-file-card {
+    display: inline-flex;
+    align-items: center;
+    gap: 12px;
+    padding: 10px 16px;
+    background: var(--g-bg);
+    border: 1px solid var(--g-border);
+    border-radius: 12px;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+
+  .g-file-card:hover {
+    border-color: #1a73e8;
+    background: #e8f0fe;
+  }
+
+  /* Status Banner Card */
+  .g-status-banner {
+    background: linear-gradient(135deg, #10b981, #059669);
+    border-radius: 20px;
+    padding: 24px;
+    color: #ffffff;
+    box-shadow: 0 4px 16px rgba(16,185,129,0.25);
+    margin-bottom: 24px;
+  }
+
+  /* Lightbox Modal */
+  .lightbox-modal {
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.85);
+    backdrop-filter: blur(4px);
+    z-index: 999999;
+    display: none;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+  }
+
+  .lightbox-modal.active {
+    display: flex;
+  }
+
+  .lightbox-img {
+    max-width: 90vw;
+    max-height: 85vh;
+    border-radius: 12px;
+    box-shadow: 0 8px 32px rgba(0,0,0,0.5);
+    object-fit: contain;
+    background: #ffffff;
+  }
+</style>
+</head>
+<body>
+
+<header class="g-header">
+  <div class="g-header-left">
+    <a href="admin.html" class="btn-g-outlined">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/></svg>
+      <span>Back to Registrations</span>
+    </a>
+    <span class="g-header-title" id="pageHeaderTitle">Warranty Registration Details</span>
+  </div>
+  <div id="headerActions"></div>
+</header>
+
+<div class="g-container">
+  <!-- Left Side: Tabs & Details -->
+  <div>
+    <div class="g-tabs">
+      <button class="g-tab active" onclick="switchTab(this, 'tabOverview')">Overview</button>
+      <button class="g-tab" onclick="switchTab(this, 'tabSupport')">Support Requests</button>
+      <button class="g-tab" onclick="switchTab(this, 'tabService')">Service Requests</button>
+      <button class="g-tab" onclick="switchTab(this, 'tabAttachments')">Attachments <span id="attachCountBadge" style="background:#e8f0fe; color:#1a73e8; font-size:11px; padding:2px 6px; border-radius:10px; margin-left:4px;">1</span></button>
+      <button class="g-tab" onclick="switchTab(this, 'tabActivity')">Activity</button>
+    </div>
+
+    <!-- TAB 1: OVERVIEW -->
+    <div id="tabOverview" class="tab-pane">
+      <!-- Product Info Card -->
+      <div class="g-product-card" id="productCardBox">
+        <div style="width:64px; height:64px; border-radius:12px; background:#e8f0fe; display:flex; align-items:center; justify-content:center; flex-shrink:0;">
+          <i class="ti ti-package" style="font-size:32px; color:#1a73e8;"></i>
+        </div>
+        <div>
+          <div style="font-size:17px; font-weight:600; color:var(--g-text-dark);" id="pNameDisplay">SpinBot Product</div>
+          <div style="font-size:13px; color:var(--g-text-sub); margin-top:4px; display:flex; gap:12px;" id="pMetaDisplay">
+            <span>SKU: <strong id="pSkuDisplay">—</strong></span>
+            <span>Brand: <strong id="pBrandDisplay">SpinBot</strong></span>
+            <span>Warranty: <strong id="pWarrantyDisplay">12 Months</strong></span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Registration Details Form Card -->
+      <div class="g-card">
+        <h3 style="font-size:16px; font-weight:500; color:var(--g-text-dark); margin:0 0 20px; display:flex; align-items:center; gap:8px;">
+          <i class="ti ti-layout-grid" style="color:#1a73e8;"></i> Product Registration Details
+        </h3>
+
+        <div class="g-field-grid">
+          <div>
+            <div class="g-field-label">Customer Name</div>
+            <div class="g-field-value" style="color:#1a73e8;" id="cNameDisplay">—</div>
+          </div>
+          <div>
+            <div class="g-field-label">Customer Email</div>
+            <div class="g-field-value" id="cEmailDisplay">—</div>
+          </div>
+          <div>
+            <div class="g-field-label">Phone Number</div>
+            <div class="g-field-value" id="cPhoneDisplay">—</div>
+          </div>
+          <div>
+            <div class="g-field-label">Date Of Purchase</div>
+            <div class="g-field-value" id="cPurchaseDateDisplay">—</div>
+          </div>
+          <div>
+            <div class="g-field-label">Invoice Copy</div>
+            <div id="cInvoiceBox">
+              <div class="g-field-value" style="color:var(--g-text-sub); font-style:italic;">No Invoice Uploaded</div>
+            </div>
+          </div>
+          <div>
+            <div class="g-field-label">Purchased Platform</div>
+            <div class="g-field-value" id="cPlatformDisplay">Direct Store</div>
+          </div>
+          <div>
+            <div class="g-field-label">Serial Number</div>
+            <div class="g-field-value" id="cSerialDisplay">N/A</div>
+          </div>
+          <div>
+            <div class="g-field-label">Product Item</div>
+            <div class="g-field-value" id="cItemDisplay">—</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- TAB 2: SUPPORT -->
+    <div id="tabSupport" class="tab-pane" style="display:none;">
+      <div class="g-card" style="text-align:center; padding:40px; color:var(--g-text-sub);">
+        No active support tickets for this customer.
+      </div>
+    </div>
+
+    <!-- TAB 3: SERVICE -->
+    <div id="tabService" class="tab-pane" style="display:none;">
+      <div class="g-card" style="text-align:center; padding:40px; color:var(--g-text-sub);">
+        No service claims logged for this product.
+      </div>
+    </div>
+
+    <!-- TAB 4: ATTACHMENTS -->
+    <div id="tabAttachments" class="tab-pane" style="display:none;">
+      <div class="g-card" style="text-align:center; padding:32px;">
+        <div id="attachmentTabContent">
+          <div style="color:var(--g-text-sub);">No invoice attachments found.</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- TAB 5: ACTIVITY -->
+    <div id="tabActivity" class="tab-pane" style="display:none;">
+      <div class="g-card" style="padding:24px;">
+        <div style="font-size:14px; color:var(--g-text-dark);" id="activityContent">Warranty registration logged.</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Right Side: Status Banner & Properties Card -->
+  <div>
+    <!-- Status Progress Card -->
+    <div class="g-status-banner">
+      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;">
+        <span style="font-size:16px; font-weight:700;" id="bannerRegId">#SB-00000</span>
+        <span style="background:rgba(255,255,255,0.25); padding:3px 10px; border-radius:12px; font-size:12px; font-weight:500;" id="bannerStatusPill">Active</span>
+      </div>
+      <div style="font-size:32px; font-weight:700; line-height:1;" id="bannerDaysCount">0</div>
+      <div style="font-size:13px; opacity:0.9; margin-top:2px; margin-bottom:14px;">days remaining</div>
+      <div style="font-size:12px; display:flex; justify-content:space-between; opacity:0.9; margin-bottom:8px;">
+        <span>Coverage Ends</span>
+        <strong id="bannerEndDate">—</strong>
+      </div>
+      <div style="width:100%; height:6px; background:rgba(255,255,255,0.3); border-radius:10px; overflow:hidden;">
+        <div id="bannerProgressBar" style="height:100%; background:#ffffff; border-radius:10px; width:0%;"></div>
+      </div>
+    </div>
+
+    <!-- Properties Card -->
+    <div class="g-card">
+      <div style="font-size:15px; font-weight:500; color:var(--g-text-dark); margin-bottom:16px; display:flex; justify-content:space-between; align-items:center;">
+        <span>Properties</span>
+        <i class="ti ti-adjustments"></i>
+      </div>
+
+      <div style="margin-bottom:16px;">
+        <label style="font-size:12px; color:var(--g-text-sub); display:block; margin-bottom:6px;">Status Approval</label>
+        <select id="statusSelect" class="form-select" onchange="handleStatusChange(this.value)">
+          <option value="Active">Approved / Active</option>
+          <option value="Pending">Pending Approval</option>
+          <option value="Expired">Expired</option>
+          <option value="Rejected">Rejected</option>
+        </select>
+      </div>
+
+      <div style="margin-bottom:14px;">
+        <div style="font-size:12px; color:var(--g-text-sub);">Warranty Registration</div>
+        <div style="font-size:13.5px; font-weight:500; color:#1a73e8; margin-top:2px;" id="sideRegId">#SB-00000</div>
+      </div>
+
+      <div style="margin-bottom:14px;">
+        <div style="font-size:12px; color:var(--g-text-sub);">Warranty ID</div>
+        <div style="font-size:13.5px; font-weight:500; color:var(--g-text-dark); margin-top:2px;" id="sideWarrantyId">SB-00000</div>
+      </div>
+
+      <div>
+        <div style="font-size:12px; color:var(--g-text-sub);">Expires</div>
+        <div style="font-size:13.5px; font-weight:500; color:var(--g-text-dark); margin-top:2px;" id="sideExpiresDisplay">—</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Lightbox Modal for Photo Invoice Document -->
+<div id="lightboxModal" class="lightbox-modal" onclick="closeLightbox()">
+  <div style="position:relative; text-align:center;" onclick="event.stopPropagation()">
+    <button type="button" onclick="closeLightbox()" style="position:absolute; top:-40px; right:0; background:none; border:none; color:#ffffff; font-size:28px; cursor:pointer;">&times;</button>
+    <img id="lightboxImg" class="lightbox-img" src="" alt="Full High-Res Invoice Document"/>
+    <div style="margin-top:12px;">
+      <a id="lightboxDownloadBtn" href="" target="_blank" download class="btn-g-outlined" style="background:#ffffff; color:#202124;">
+        <i class="ti ti-download"></i> Download Original Image
+      </a>
+    </div>
+  </div>
+</div>
+
+<script type="module">
+  import { getRegistrations, getRegistrationById, updateRegistrationStatus, calculateWarrantyDates } from './js/db-service.js?v=26.0.0';
+  import { showToast, formatDate } from './js/ui-components.js?v=26.0.0';
+
+  let currentReg = null;
+
+  window.switchTab = (btnEl, paneId) => {
+    document.querySelectorAll('.g-tab').forEach(b => b.classList.remove('active'));
+    btnEl.classList.add('active');
+    document.querySelectorAll('.tab-pane').forEach(p => p.style.display = 'none');
+    const pane = document.getElementById(paneId);
+    if (pane) pane.style.display = 'block';
+  };
+
+  window.openLightbox = (url) => {
+    if (!url) return;
+    const modal = document.getElementById('lightboxModal');
+    const img = document.getElementById('lightboxImg');
+    const dl = document.getElementById('lightboxDownloadBtn');
+
+    img.src = url;
+    dl.href = url;
+    modal.classList.add('active');
+  };
+
+  window.closeLightbox = () => {
+    document.getElementById('lightboxModal').classList.remove('active');
+  };
+
+  window.handleStatusChange = async (newStatus) => {
+    if (!currentReg) return;
+    try {
+      await updateRegistrationStatus(currentReg.id, newStatus);
+      showToast(`Status updated to ${newStatus}`, 'success');
+      currentReg.status = newStatus;
+      renderRegDetails(currentReg);
+    } catch(e) {
+      showToast('Error updating status', 'error');
+    }
+  };
+
+  function renderRegDetails(reg) {
+    if (!reg) return;
+    currentReg = reg;
+
+    const fullName = reg.fullName || reg.customerName || reg.name || '—';
+    const email = reg.email || reg.customerEmail || '—';
+    const phone = reg.phone || reg.customerPhone || '—';
+    const product = reg.product || reg.productName || reg.item || 'SpinBot Product';
+    const sku = reg.sku || reg.skuId || 'SB-GENERIC';
+    const brand = reg.brand || 'SpinBot';
+    const warrantyPeriod = reg.warrantyPeriod || '12 Months';
+    const purchaseDate = reg.purchaseDate || reg.startDate || reg.createdAt || new Date().toISOString();
+    const purchasePlatform = reg.purchasePlatform || reg.platform || 'Direct Store';
+    const serialNumber = reg.serialNumber || 'N/A';
+    const warrantyId = reg.warrantyId || reg.registrationId || reg.id || 'SB-00000';
+    const status = reg.status || 'Active';
+
+    // Calculate dates dynamically if missing
+    const warrantyMonths = parseInt(warrantyPeriod) || 12;
+    const calc = calculateWarrantyDates(purchaseDate, warrantyMonths);
+    const endDate = reg.endDate || calc.endDate;
+    const daysRemaining = (typeof reg.daysRemaining === 'number') ? reg.daysRemaining : calc.daysRemaining;
+    const progressPercent = Math.min(100, Math.max(5, Math.round((daysRemaining / (warrantyMonths * 30)) * 100)));
+
+    document.getElementById('pageHeaderTitle').textContent = `Registration #${warrantyId}`;
+    
+    // Product Card
+    const pBox = document.getElementById('productCardBox');
+    const pImg = reg.productImage || reg.image;
+    pBox.innerHTML = `
+      ${pImg ? `
+        <img src="${pImg}" alt="${product}" style="width:64px; height:64px; border-radius:12px; object-fit:cover; border:1px solid var(--g-border); flex-shrink:0; box-shadow:0 2px 8px rgba(0,0,0,0.06);"/>
+      ` : `
+        <div style="width:64px; height:64px; border-radius:12px; background:#e8f0fe; display:flex; align-items:center; justify-content:center; flex-shrink:0;">
+          <i class="ti ti-package" style="font-size:32px; color:#1a73e8;"></i>
+        </div>
+      `}
+      <div>
+        <div style="font-size:17px; font-weight:600; color:var(--g-text-dark);">${product}</div>
+        <div style="font-size:13px; color:var(--g-text-sub); margin-top:4px; display:flex; gap:12px; flex-wrap:wrap;">
+          <span>SKU: <strong style="font-family:monospace; color:#1a73e8;">${sku}</strong></span>
+          <span>Brand: <strong>${brand}</strong></span>
+          <span>Warranty: <strong>${warrantyPeriod}</strong></span>
+        </div>
+      </div>
+    `;
+
+    document.getElementById('cNameDisplay').textContent = fullName;
+    document.getElementById('cEmailDisplay').textContent = email;
+    document.getElementById('cPhoneDisplay').textContent = phone;
+    document.getElementById('cPurchaseDateDisplay').textContent = formatDate(purchaseDate);
+    document.getElementById('cPlatformDisplay').textContent = purchasePlatform;
+    document.getElementById('cSerialDisplay').textContent = serialNumber;
+    document.getElementById('cItemDisplay').textContent = product;
+
+    // Invoice Copy Rendering
+    const invoiceBox = document.getElementById('cInvoiceBox');
+    if (reg.invoiceUrl) {
+      invoiceBox.innerHTML = `
+        <div class="g-file-card" onclick="openLightbox('${reg.invoiceUrl}')" title="Click to view full photo document">
+          <div style="width:36px; height:36px; border-radius:8px; background:#e6f4ea; color:#137333; display:flex; align-items:center; justify-content:center; flex-shrink:0;">
+            <i class="ti ti-file-text" style="font-size:20px;"></i>
+          </div>
+          <div>
+            <div style="font-size:13px; font-weight:500; color:var(--g-text-dark);">Photo Invoice Document</div>
+            <div style="font-size:11px; color:#137333; font-weight:500;">Click to view full image</div>
+          </div>
+        </div>
+      `;
+
+      document.getElementById('attachmentTabContent').innerHTML = `
+        <div style="text-align:center;">
+          <img src="${reg.invoiceUrl}" alt="Invoice Document" style="max-width:100%; max-height:450px; border-radius:12px; border:1px solid var(--g-border); object-fit:contain; margin-bottom:16px; cursor:pointer; box-shadow:0 4px 16px rgba(0,0,0,0.08);" onclick="openLightbox('${reg.invoiceUrl}')"/>
+          <div>
+            <button type="button" class="btn-g-outlined" onclick="openLightbox('${reg.invoiceUrl}')">
+              <i class="ti ti-maximize"></i> Open Fullscreen Lightbox
+            </button>
+          </div>
+        </div>
+      `;
+    } else {
+      invoiceBox.innerHTML = `<div class="g-field-value" style="color:var(--g-text-sub); font-style:italic;">No Invoice Uploaded</div>`;
+      document.getElementById('attachmentTabContent').innerHTML = `<div style="color:var(--g-text-sub);">No invoice attachments found.</div>`;
+    }
+
+    // Right Properties Banner
+    document.getElementById('bannerRegId').textContent = `#${warrantyId}`;
+    document.getElementById('bannerStatusPill').textContent = status;
+    document.getElementById('bannerDaysCount').textContent = daysRemaining;
+    document.getElementById('bannerEndDate').textContent = formatDate(endDate);
+    document.getElementById('bannerProgressBar').style.width = `${progressPercent}%`;
+
+    document.getElementById('statusSelect').value = status;
+    document.getElementById('sideRegId').textContent = `#${warrantyId}`;
+    document.getElementById('sideWarrantyId').textContent = warrantyId;
+    document.getElementById('sideExpiresDisplay').textContent = `${formatDate(endDate)} (${daysRemaining} days left)`;
+  }
+
+  window.addEventListener('DOMContentLoaded', async () => {
+    const urlParams = new URLSearchParams(window.location.search);
+    const regId = urlParams.get('id');
+
+    if (!regId) {
+      window.location.href = 'admin.html';
+      return;
+    }
+
+    let loaded = false;
+
+    // 1. Instant rendering from sessionStorage if available
+    try {
+      const saved = sessionStorage.getItem('selected_registration');
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        if (parsed) {
+          const pId = (parsed.id || '').replace(/^#/, '').trim().toLowerCase();
+          const pWId = (parsed.warrantyId || '').replace(/^#/, '').trim().toLowerCase();
+          const qId = regId.replace(/^#/, '').trim().toLowerCase();
+
+          if (pId === qId || pWId === qId || pId.includes(qId) || pWId.includes(qId) || qId.includes(pId) || qId.includes(pWId)) {
+            renderRegDetails(parsed);
+            loaded = true;
+          }
+        }
+      }
+    } catch(e) {}
+
+    // 2. Fetch EXACT real Firestore document by ID
+    try {
+      const realDoc = await getRegistrationById(regId);
+      if (realDoc) {
+        renderRegDetails(realDoc);
+        loaded = true;
+      } else if (!loaded) {
+        showToast('Registration details not found for ID: ' + regId, 'error');
+      }
+    } catch (err) {
+      console.error(err);
+      if (!loaded) showToast('Error loading registration data', 'error');
+    }
+  });
+</script>
+</body>
+</html>

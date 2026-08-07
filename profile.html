@@ -1,0 +1,742 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>SpinBot Account — Profile & Registered Devices</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Google+Sans:wght@400;500;600;700&family=Roboto:wght@400;500&display=swap"/>
+<link rel="stylesheet" href="css/common.css?v=26.0.0"/>
+<link rel="stylesheet" href="css/user.css?v=26.0.0"/>
+<style>
+  :root {
+    --g-bg: #ffffff;
+    --g-surface: #f8f9fa;
+    --g-border: #dadce0;
+    --g-text-dark: #202124;
+    --g-text-sub: #5f6368;
+    --spin-lime: #76D300;
+    --spin-lime-dark: #5eb000;
+    --spin-lime-light: #f3fcdd;
+  }
+
+  * {
+    box-sizing: border-box;
+  }
+
+  body {
+    background-color: var(--g-bg);
+    color: var(--g-text-dark);
+    font-family: 'Google Sans', 'Roboto', -apple-system, BlinkMacSystemFont, sans-serif;
+    min-height: 100vh;
+    margin: 0;
+    padding-bottom: 60px;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  /* Google Account Header Bar */
+  .g-header {
+    background: #ffffff;
+    border-bottom: 1px solid var(--g-border);
+    padding: 12px 24px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    position: sticky;
+    top: 0;
+    z-index: 100;
+  }
+
+  .g-header-brand {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    text-decoration: none;
+  }
+
+  .g-header-brand img {
+    height: 36px;
+    width: auto;
+    object-fit: contain;
+  }
+
+  .g-header-title {
+    font-size: 18px;
+    font-weight: 500;
+    color: var(--g-text-sub);
+    border-left: 1px solid var(--g-border);
+    padding-left: 12px;
+  }
+
+  .g-header-actions {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+
+  .btn-g-primary {
+    background: var(--spin-lime);
+    color: #0f172a;
+    font-size: 13.5px;
+    font-weight: 500;
+    padding: 8px 18px;
+    border-radius: 20px;
+    text-decoration: none;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    transition: all 0.2s ease;
+    border: none;
+    box-shadow: 0 1px 3px rgba(60,64,67,0.15);
+  }
+
+  .btn-g-primary:hover {
+    background: var(--spin-lime-dark);
+    color: #ffffff;
+    box-shadow: 0 2px 6px rgba(60,64,67,0.25);
+  }
+
+  .btn-g-outlined {
+    background: transparent;
+    color: var(--g-text-sub);
+    font-size: 13.5px;
+    font-weight: 500;
+    padding: 8px 16px;
+    border-radius: 20px;
+    border: 1px solid var(--g-border);
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    transition: background 0.2s ease;
+  }
+
+  .btn-g-outlined:hover {
+    background: var(--g-surface);
+    color: var(--g-text-dark);
+  }
+
+  /* Main Profile Container */
+  .g-container {
+    max-width: 840px;
+    margin: 36px auto 0;
+    padding: 0 20px;
+  }
+
+  /* Google Profile Hero Section */
+  .g-hero {
+    text-align: center;
+    margin-bottom: 36px;
+  }
+
+  .g-avatar-wrapper {
+    position: relative;
+    width: 84px;
+    height: 84px;
+    margin: 0 auto 16px;
+  }
+
+  .g-avatar-img {
+    width: 100%;
+    height: 100%;
+    border-radius: 50%;
+    object-fit: cover;
+    border: 2px solid var(--g-border);
+  }
+
+  .g-avatar-initials {
+    width: 100%;
+    height: 100%;
+    border-radius: 50%;
+    background: #e8f0fe;
+    color: #1a73e8;
+    font-size: 32px;
+    font-weight: 500;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: 2px solid var(--g-border);
+  }
+
+  .g-welcome-text {
+    font-size: 24px;
+    font-weight: 400;
+    color: var(--g-text-dark);
+    margin: 0 0 4px;
+  }
+
+  .g-email-text {
+    font-size: 14px;
+    color: var(--g-text-sub);
+    margin: 0 0 12px;
+  }
+
+  .g-badge-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    background: var(--spin-lime-light);
+    color: #3b7300;
+    font-size: 12.5px;
+    font-weight: 500;
+    padding: 4px 12px;
+    border-radius: 16px;
+    border: 1px solid rgba(118, 211, 0, 0.4);
+  }
+
+  /* Google Material Card Style */
+  .g-card {
+    background: #ffffff;
+    border: 1px solid var(--g-border);
+    border-radius: 16px;
+    margin-bottom: 24px;
+    overflow: hidden;
+    transition: box-shadow 0.2s ease;
+  }
+
+  .g-card:hover {
+    box-shadow: 0 1px 6px rgba(32,33,36,0.12);
+  }
+
+  .g-card-header {
+    padding: 20px 24px 12px;
+    border-bottom: 1px solid #f1f3f4;
+  }
+
+  .g-card-title {
+    font-size: 18px;
+    font-weight: 500;
+    color: var(--g-text-dark);
+    margin: 0 0 4px;
+  }
+
+  .g-card-sub {
+    font-size: 13px;
+    color: var(--g-text-sub);
+    margin: 0;
+  }
+
+  /* Google Personal Info Rows */
+  .g-row {
+    display: flex;
+    align-items: center;
+    padding: 16px 24px;
+    border-bottom: 1px solid #f1f3f4;
+  }
+
+  .g-row:last-child {
+    border-bottom: none;
+  }
+
+  .g-row-label {
+    width: 180px;
+    font-size: 13.5px;
+    color: var(--g-text-sub);
+    font-weight: 400;
+  }
+
+  .g-row-value {
+    flex: 1;
+    font-size: 14.5px;
+    color: var(--g-text-dark);
+    font-weight: 500;
+  }
+
+  /* Call To Action Card */
+  .g-cta-card {
+    background: var(--g-surface);
+    border: 1px solid var(--g-border);
+    border-radius: 16px;
+    padding: 20px 24px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 28px;
+  }
+
+  .g-cta-title {
+    font-size: 16px;
+    font-weight: 500;
+    color: var(--g-text-dark);
+    margin-bottom: 2px;
+  }
+
+  .g-cta-sub {
+    font-size: 13px;
+    color: var(--g-text-sub);
+  }
+
+  /* Device Cards Grid */
+  .g-device-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(360px, 1fr));
+    gap: 16px;
+  }
+
+  .g-device-card {
+    background: #ffffff;
+    border: 1px solid var(--g-border);
+    border-radius: 16px;
+    padding: 20px;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    transition: box-shadow 0.2s ease, border-color 0.2s ease;
+  }
+
+  .g-device-card:hover {
+    border-color: #bdc1c6;
+    box-shadow: 0 2px 8px rgba(60,64,67,0.12);
+  }
+
+  .g-device-top {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 12px;
+  }
+
+  .g-device-id {
+    font-family: monospace;
+    font-size: 12px;
+    color: var(--g-text-dark);
+    background: var(--g-surface);
+    padding: 4px 8px;
+    border-radius: 6px;
+    border: 1px solid var(--g-border);
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+  }
+
+  .g-pill {
+    font-size: 12px;
+    font-weight: 500;
+    padding: 3px 10px;
+    border-radius: 12px;
+  }
+
+  .g-pill-active { background: #e6f4ea; color: #137333; border: 1px solid #ceead6; }
+  .g-pill-expired { background: #fce8e6; color: #c5221f; border: 1px solid #f8c4b8; }
+
+  .g-device-name {
+    font-size: 16px;
+    font-weight: 500;
+    color: var(--g-text-dark);
+    margin-bottom: 2px;
+  }
+
+  .g-device-sku {
+    font-size: 12.5px;
+    color: var(--g-text-sub);
+    margin-bottom: 12px;
+  }
+
+  .g-progress-bg {
+    height: 5px;
+    width: 100%;
+    background: #e8eaed;
+    border-radius: 4px;
+    overflow: hidden;
+    margin-bottom: 14px;
+  }
+
+  .g-progress-fill {
+    height: 100%;
+    background: var(--spin-lime);
+    border-radius: 4px;
+  }
+
+  .g-meta-grid {
+    background: var(--g-surface);
+    border-radius: 10px;
+    padding: 10px 12px;
+    font-size: 12px;
+    color: var(--g-text-sub);
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 6px;
+    margin-bottom: 16px;
+  }
+
+  .g-meta-grid div span {
+    color: var(--g-text-dark);
+    font-weight: 500;
+  }
+
+  .g-device-actions {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    border-top: 1px solid #f1f3f4;
+    padding-top: 12px;
+  }
+
+  .btn-g-card-action {
+    flex: 1;
+    height: 36px;
+    border-radius: 8px;
+    font-size: 13px;
+    font-weight: 500;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    text-decoration: none;
+    cursor: pointer;
+    transition: background 0.2s ease;
+  }
+
+  .btn-g-card-main {
+    background: #1a73e8;
+    color: #ffffff;
+    border: none;
+  }
+
+  .btn-g-card-main:hover {
+    background: #1557b0;
+  }
+
+  .btn-g-card-sub {
+    background: transparent;
+    color: var(--g-text-sub);
+    border: 1px solid var(--g-border);
+  }
+
+  .btn-g-card-sub:hover {
+    background: var(--g-surface);
+    color: var(--g-text-dark);
+  }
+
+  @media (max-width: 600px) {
+    .g-cta-card {
+      flex-direction: column;
+      gap: 12px;
+      text-align: center;
+    }
+    .g-device-grid {
+      grid-template-columns: 1fr;
+    }
+  }
+</style>
+</head>
+<body>
+
+<!-- Google Style Header -->
+<header class="g-header">
+  <a href="index.html" class="g-header-brand">
+    <img src="public/images/download.png" alt="SpinBot Logo"/>
+    <span class="g-header-title">Account</span>
+  </a>
+
+  <div class="g-header-actions">
+    <a href="step2-product.html" class="btn-g-primary">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+      <span>Register Product</span>
+    </a>
+    <button onclick="handleLogout()" class="btn-g-outlined" title="Sign Out">
+      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+      <span>Sign out</span>
+    </button>
+  </div>
+</header>
+
+<!-- Main Container -->
+<div class="g-container">
+
+  <!-- Profile Hero Section -->
+  <div class="g-hero">
+    <div class="g-avatar-wrapper">
+      <div id="avatarContainer">
+        <div id="ownerInitials" class="g-avatar-initials">U</div>
+      </div>
+    </div>
+
+    <h1 id="ownerWelcomeDisplay" class="g-welcome-text">Welcome, SpinBot Customer</h1>
+    <div id="ownerEmailDisplay" class="g-email-text">loading...</div>
+
+    <div class="g-badge-chip">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><polyline points="9 12 11 14 15 10"/></svg>
+      <span>Verified Device Owner</span>
+    </div>
+  </div>
+
+  <!-- Personal Information Card -->
+  <div class="g-card">
+    <div class="g-card-header">
+      <h2 class="g-card-title">Personal Info</h2>
+      <p class="g-card-sub">Basic info used across your SpinBot device warranties</p>
+    </div>
+
+    <div class="g-row">
+      <div class="g-row-label">Name</div>
+      <div id="infoName" class="g-row-value">SpinBot Customer</div>
+    </div>
+
+    <div class="g-row">
+      <div class="g-row-label">Email</div>
+      <div id="infoEmail" class="g-row-value">loading...</div>
+    </div>
+
+    <div class="g-row">
+      <div class="g-row-label">Account UID</div>
+      <div id="infoUid" class="g-row-value" style="font-family: monospace;">UID-SPINBOT</div>
+    </div>
+
+    <div class="g-row">
+      <div class="g-row-label">Registered Products</div>
+      <div class="g-row-value">
+        <span id="statDevicesCount">0</span> Devices • <span id="statActiveCount">0</span> Active Coverage
+      </div>
+    </div>
+  </div>
+
+  <!-- Register New Product Banner -->
+  <div class="g-cta-card">
+    <div>
+      <div class="g-cta-title">Register a new SpinBot gaming accessory</div>
+      <div class="g-cta-sub">Claim instant brand protection and digital invoice storage</div>
+    </div>
+    <a href="step2-product.html" class="btn-g-primary">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+      <span>Register Product</span>
+    </a>
+  </div>
+
+  <!-- Devices Section -->
+  <div style="margin-bottom: 16px;">
+    <h2 style="font-size: 18px; font-weight: 500; color: var(--g-text-dark); margin: 0 0 4px;">Registered Products</h2>
+    <p style="font-size: 13px; color: var(--g-text-sub); margin: 0;">Devices tied to your account and their active warranty status</p>
+  </div>
+
+  <!-- Device Cards Container -->
+  <div id="productsGridContainer" class="g-device-grid">
+    <div style="grid-column: 1 / -1; text-align: center; padding: 40px; background: #ffffff; border-radius: 16px; border: 1px solid var(--g-border);">
+      <div style="font-size: 14px; color: var(--g-text-sub);">Loading registered devices...</div>
+    </div>
+  </div>
+
+</div>
+
+<script type="module">
+  import { showToast } from './js/ui-components.js?v=23.0.0';
+  import { getRegistrations } from './js/db-service.js?v=23.0.0';
+  import { getCustomerSession, logoutCustomer } from './js/auth-service.js?v=23.0.0';
+
+  let activeCustomer = null;
+
+  async function initGoogleStyleProfile() {
+    activeCustomer = getCustomerSession();
+    
+    if (!activeCustomer) {
+      showToast('Please enter your email to access your profile', 'info');
+      setTimeout(() => window.location.href = 'index.html', 800);
+      return;
+    }
+
+    // Format UID into clean, professional SpinBot Member ID
+    function formatDisplayUid(rawUid, userEmail) {
+      if (!rawUid && !userEmail) return 'SB-UID-1000-2000';
+      let hash = 0;
+      const str = String(rawUid || userEmail || 'SPINBOT').toLowerCase();
+      for (let i = 0; i < str.length; i++) {
+        hash = ((hash << 5) - hash) + str.charCodeAt(i);
+        hash |= 0;
+      }
+      const pos = Math.abs(hash);
+      const part1 = (1000 + (pos % 9000)).toString();
+      const part2 = (1000 + (Math.floor(pos / 9000) % 9000)).toString();
+      return `SB-UID-${part1}-${part2}`;
+    }
+
+    // Populate Google Profile Info
+    const fullName = activeCustomer.fullName || activeCustomer.name || 'SpinBot Customer';
+    const email = activeCustomer.email || '';
+    const userUid = activeCustomer.uid || activeCustomer.googleUid || '';
+    const displayUid = formatDisplayUid(userUid, email);
+    const initials = (fullName || email || 'U').charAt(0).toUpperCase();
+
+    document.getElementById('ownerWelcomeDisplay').innerText = `Welcome, ${fullName}`;
+    document.getElementById('ownerEmailDisplay').innerText = email;
+    document.getElementById('infoName').innerText = fullName;
+    document.getElementById('infoEmail').innerText = email;
+    document.getElementById('infoUid').innerText = displayUid;
+
+    // Render Avatar
+    const avatarContainer = document.getElementById('avatarContainer');
+    if (activeCustomer.photoURL) {
+      avatarContainer.innerHTML = `<img src="${activeCustomer.photoURL}" alt="${fullName}" class="g-avatar-img"/>`;
+    } else {
+      document.getElementById('ownerInitials').innerText = initials;
+    }
+
+    // Load Customer Devices (Strictly match UID or Email)
+    try {
+      const allRegs = await getRegistrations();
+      const userRegs = allRegs.filter(r => {
+        const matchUid = (r.customerUid && userUid && r.customerUid === userUid) || (r.googleUid && activeCustomer.googleUid && r.googleUid === activeCustomer.googleUid);
+        const matchEmail = r.email && email && r.email.toLowerCase().trim() === email.toLowerCase().trim();
+        return matchUid || matchEmail;
+      });
+
+      document.getElementById('statDevicesCount').innerText = userRegs.length;
+
+      const activeCount = userRegs.filter(r => {
+        const totalMonths = parseInt(r.warrantyPeriod) || 12;
+        let daysLeft = 365;
+        if (r.daysRemaining !== undefined && r.daysRemaining !== null) {
+          daysLeft = parseInt(r.daysRemaining);
+        } else if (r.endDate) {
+          daysLeft = Math.ceil((new Date(r.endDate).getTime() - Date.now()) / (1000 * 60 * 60 * 24));
+        }
+        return daysLeft > 0;
+      }).length;
+
+      document.getElementById('statActiveCount').innerText = activeCount;
+
+      const container = document.getElementById('productsGridContainer');
+
+      if (userRegs.length === 0) {
+        container.innerHTML = `
+          <div style="grid-column: 1 / -1; text-align: center; padding: 44px 24px; background: #ffffff; border-radius: 16px; border: 1px solid var(--g-border);">
+            <div style="width: 48px; height: 48px; margin: 0 auto 12px; background: #f1f3f4; border-radius: 50%; display: flex; align-items: center; justify-content: center; color: #5f6368;">
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/></svg>
+            </div>
+            <h3 style="font-size: 16px; font-weight: 500; color: var(--g-text-dark); margin-bottom: 4px;">No Registered Devices Found</h3>
+            <p style="font-size: 13px; color: var(--g-text-sub); max-width: 380px; margin: 0 auto 18px;">
+              You haven't registered any SpinBot products under this email address yet.
+            </p>
+            <a href="step2-product.html" class="btn-g-primary" style="display: inline-flex;">
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+              <span>Register Your First Device</span>
+            </a>
+          </div>
+        `;
+        return;
+      }
+
+      container.innerHTML = userRegs.map(r => {
+        const totalMonths = parseInt(r.warrantyPeriod) || 12;
+        const totalDays = totalMonths * 30;
+
+        let daysLeft = 365;
+        if (r.daysRemaining !== undefined && r.daysRemaining !== null) {
+          daysLeft = parseInt(r.daysRemaining);
+        } else if (r.endDate) {
+          daysLeft = Math.ceil((new Date(r.endDate).getTime() - Date.now()) / (1000 * 60 * 60 * 24));
+        }
+
+        const isExpired = daysLeft <= 0;
+        const monthsLeft = isExpired ? 0 : Math.ceil(daysLeft / 30);
+        const progressWidth = isExpired ? 0 : Math.min(100, Math.max(5, (daysLeft / totalDays) * 100));
+
+        const statusClass = isExpired ? 'g-pill-expired' : 'g-pill-active';
+        const statusText = isExpired ? '⚠️ Warranty Expired' : '● Active Warranty';
+
+        return `
+          <div class="g-device-card" style="${isExpired ? 'border-color: #f8c4b8; background: #fffcfc;' : ''}">
+            <div>
+              <div class="g-device-top">
+                <span class="g-device-id">
+                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 5v14"/><path d="M8 5v14"/><path d="M12 5v14"/><path d="M17 5v14"/><path d="M21 5v14"/></svg> ${r.warrantyId || 'SB-REG'}
+                </span>
+                <span class="g-pill ${statusClass}">${statusText}</span>
+              </div>
+
+              <div class="g-device-name">
+                ${r.product || 'SpinBot Product'}
+              </div>
+
+              <div class="g-device-sku">
+                SKU: ${r.sku || 'S2-ICEDOT-MAG-V1'}
+              </div>
+
+              <!-- Dedicated Warranty Progress Card Box -->
+              <div style="background: ${isExpired ? '#fff5f5' : '#f4fbf0'}; border: 1px solid ${isExpired ? '#f8c4b8' : '#d2f2b0'}; border-radius: 14px; padding: 14px 16px; margin-bottom: 16px;">
+                <div style="display: flex; justify-content: space-between; align-items: center; font-size: 12.5px; margin-bottom: 8px;">
+                  <span style="color: var(--g-text-dark); font-weight: 500; display: flex; align-items: center; gap: 5px;">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="${isExpired ? '#d93025' : '#5eb000'}" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+                    Warranty Progress
+                  </span>
+                  ${isExpired ? `
+                    <span style="color: #c5221f; font-weight: 600; font-size: 12px; background: #fce8e6; padding: 2px 8px; border-radius: 10px;">Expired</span>
+                  ` : `
+                    <span style="color: #137333; font-weight: 600; font-size: 12px; background: #e6f4ea; padding: 2px 8px; border-radius: 10px;">${monthsLeft} Month${monthsLeft !== 1 ? 's' : ''} (${daysLeft} Days left)</span>
+                  `}
+                </div>
+
+                <div style="height: 8px; width: 100%; background: ${isExpired ? '#fad2cf' : '#e2f4c9'}; border-radius: 10px; overflow: hidden; margin-bottom: 10px;">
+                  <div style="height: 100%; width: ${progressWidth}%; background: ${isExpired ? '#d93025' : 'linear-gradient(90deg, #5eb000, #76D300)'}; border-radius: 10px; transition: width 0.4s ease;"></div>
+                </div>
+
+                <div style="display: flex; justify-content: space-between; align-items: center; font-size: 11.5px; color: var(--g-text-sub);">
+                  <div>
+                    <span style="display: block; font-size: 10px; text-transform: uppercase; color: #70757a; font-weight: 500;">Purchased</span>
+                    <span style="font-weight: 500; color: var(--g-text-dark);">${r.purchaseDate || 'N/A'}</span>
+                  </div>
+                  <div style="text-align: right;">
+                    <span style="display: block; font-size: 10px; text-transform: uppercase; color: #70757a; font-weight: 500;">Valid Until</span>
+                    <span style="font-weight: 500; color: ${isExpired ? '#c5221f' : '#137333'};">${r.endDate || 'N/A'}</span>
+                  </div>
+                </div>
+
+                ${isExpired ? `
+                  <div style="background: #fce8e6; border: 1px solid #f8c4b8; color: #c5221f; font-size: 12px; font-weight: 500; padding: 8px 12px; border-radius: 8px; margin-top: 10px; display: flex; align-items: center; gap: 6px;">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+                    Your product warranty is expired
+                  </div>
+                ` : ''}
+              </div>
+
+              <div class="g-meta-grid">
+                <div style="display:flex; align-items:center; gap:5px;">
+                  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#5f6368" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+                  <span>Purchase: <span>${r.purchaseDate || 'N/A'}</span></span>
+                </div>
+                <div style="display:flex; align-items:center; gap:5px;">
+                  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#5f6368" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/><path d="M16 10a4 4 0 0 1-8 0"/></svg>
+                  <span>Platform: <span>${r.purchasePlatform || 'Amazon'}</span></span>
+                </div>
+                <div style="display:flex; align-items:center; gap:5px;">
+                  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#5f6368" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+                  <span>Total Plan: <span>${r.warrantyPeriod || '12 Months'}</span></span>
+                </div>
+                <div style="display:flex; align-items:center; gap:5px;">
+                  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="${isExpired ? '#c5221f' : '#137333'}" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+                  <span>Valid Until: <span style="color: ${isExpired ? '#c5221f' : '#137333'};">${r.endDate || 'N/A'}</span></span>
+                </div>
+              </div>
+            </div>
+
+            <div class="g-device-actions">
+              <a href="success.html?id=${encodeURIComponent(r.warrantyId || '')}" class="btn-g-card-action btn-g-card-main">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg> View Ticket
+              </a>
+              <button onclick="copyToClipboard('${r.warrantyId || ''}')" class="btn-g-card-action btn-g-card-sub" title="Copy Registration ID">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg> Copy ID
+              </button>
+            </div>
+          </div>
+        `;
+      }).join('');
+
+    } catch (e) {
+      console.error('Error loading devices:', e);
+    }
+  }
+
+  window.handleLogout = () => {
+    logoutCustomer();
+    showToast('Signed out successfully', 'info');
+    setTimeout(() => window.location.href = 'index.html', 400);
+  };
+
+  window.copyToClipboard = (text) => {
+    if (!text) return;
+    navigator.clipboard.writeText(text);
+    showToast(`Copied ${text} to clipboard!`, 'success');
+  };
+
+  initGoogleStyleProfile();
+</script>
+</body>
+</html>
