@@ -10,7 +10,7 @@ async function testUpload() {
     const res = await fetch('https://spinbot-upload.product-register.workers.dev/upload', {
       method: 'POST',
       headers: {
-        'X-Api-Secret': process.env.UPLOAD_API_SECRET || ''
+        'X-Api-Secret': 'spinbot_upload_secret_2026'
       },
       body: formData
     });
