@@ -417,6 +417,9 @@
       showToast('Please enter a valid 10-digit mobile number', 'warning');
       const phoneEl = document.getElementById('phone');
       if (phoneEl) phoneEl.focus();
+      return;
+    }
+
     const email = document.getElementById('email').value.trim();
     const purchaseDate = document.getElementById('purchaseDate').value;
     const purchasePlatform = document.getElementById('purchasePlatform').value;
@@ -446,7 +449,10 @@
     }
 
     const submitBtn = document.getElementById('submitBtn');
-    if (submitBtn) submitBtn.disabled = true;
+    if (submitBtn) {
+      submitBtn.disabled = true;
+      submitBtn.innerHTML = '<span>Activating...</span>';
+    }
 
     const sessStr = sessionStorage.getItem('sb_customer_session') || localStorage.getItem('sb_customer_session');
     let custUid = '';
