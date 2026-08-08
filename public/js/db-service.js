@@ -941,6 +941,7 @@ export async function getProducts() {
       remSnap.forEach(d => {
         const data = d.data();
         fsRemoved.push(d.id);
+        if (data.id) fsRemoved.push(data.id);
         if (Array.isArray(data.keys)) fsRemoved.push(...data.keys);
       });
     } catch (e) { }
@@ -951,10 +952,11 @@ export async function getProducts() {
   const getProductKey = (p) => (p.sku || p.name || p.id || '').toLowerCase().trim();
 
   const isRemoved = (p) => {
+    if (!p) return false;
     const k1 = (p.id || '').toLowerCase().trim();
     const k2 = (p.sku || '').toLowerCase().trim();
     const k3 = (p.name || '').toLowerCase().trim();
-    return removedList.includes(k1) || removedList.includes(k2) || removedList.includes(k3);
+    return (k1 && removedList.includes(k1)) || (k2 && removedList.includes(k2)) || (k3 && removedList.includes(k3));
   };
 
   // 1. Add Default Catalog items if not removed
@@ -1014,12 +1016,12 @@ export async function updateProduct(id, pData) {
 
 export async function deleteProduct(id, pObj = null) {
   try {
-    // Identify all matching keys for this product
-    const keysToRemove = [id];
+    const cleanId = String(id).trim();
+    const keysToRemove = [cleanId, cleanId.toLowerCase()];
     if (pObj) {
-      if (pObj.id) keysToRemove.push(pObj.id);
-      if (pObj.sku) keysToRemove.push(pObj.sku, pObj.sku.toLowerCase().trim());
-      if (pObj.name) keysToRemove.push(pObj.name, pObj.name.toLowerCase().trim());
+      if (pObj.id) keysToRemove.push(pObj.id, String(pObj.id).toLowerCase().trim());
+      if (pObj.sku) keysToRemove.push(pObj.sku, String(pObj.sku).toLowerCase().trim());
+      if (pObj.name) keysToRemove.push(pObj.name, String(pObj.name).toLowerCase().trim());
     }
 
     // 1. Remove from local storage array
@@ -1031,21 +1033,22 @@ export async function deleteProduct(id, pObj = null) {
 
     // 2. Track in removed products list so item is blacklisted everywhere
     keysToRemove.forEach(k => {
-      if (k) saveLocalData(LOCAL_REMOVED_PRODS_KEY, k);
+      if (k) saveLocalData(LOCAL_REMOVED_PRODS_KEY, String(k).toLowerCase().trim());
     });
 
     // 3. Sync deletion to Firestore so all clients get the deletion
     if (db) {
       try {
         const { doc: dDoc, setDoc: sDoc, deleteDoc: delDoc } = await import("https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js");
-        await sDoc(dDoc(db, 'deleted_products', String(id)), {
-          id: String(id),
-          keys: keysToRemove,
+        const safeDocId = cleanId.replace(/[\/\.#$\[\]]/g, '_');
+        await sDoc(dDoc(db, 'deleted_products', safeDocId), {
+          id: cleanId,
+          keys: keysToRemove.map(k => String(k).toLowerCase().trim()),
           deletedAt: new Date().toISOString()
         }, { merge: true }).catch(() => {});
 
-        if (!String(id).startsWith('loc_')) {
-          await delDoc(dDoc(db, 'products', String(id))).catch(() => {});
+        if (!cleanId.startsWith('loc_')) {
+          await delDoc(dDoc(db, 'products', cleanId)).catch(() => {});
         }
       } catch (e) { }
     }

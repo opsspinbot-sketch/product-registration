@@ -2,21 +2,50 @@ rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
     
-    // User Profiles Collection: Security Rule
-    // Only logged-in users can access their own document users/{userId}
-    // No user can read or write another user's profile
+    // User Profiles Collection
     match /users/{userId} {
       allow read, write: if request.auth != null && request.auth.uid == userId;
     }
     
     // Legacy customer_profiles fallback
     match /customer_profiles/{profileId} {
-      allow read, write: if request.auth != null;
+      allow read, write: if true;
     }
 
     // Warranty Registrations Collection
     match /registrations/{registrationId} {
-      allow read, write: if request.auth != null;
+      allow read, write: if true;
+    }
+
+    // Customers Collection
+    match /customers/{customerId} {
+      allow read, write: if true;
+    }
+
+    // Products & Deleted Products Catalog
+    match /products/{productId} {
+      allow read, write: if true;
+    }
+    match /deleted_products/{deletedId} {
+      allow read, write: if true;
+    }
+
+    // Marketplaces & Deleted Marketplaces Catalog
+    match /marketplaces/{mktId} {
+      allow read, write: if true;
+    }
+    match /deleted_marketplaces/{deletedId} {
+      allow read, write: if true;
+    }
+
+    // Settings & Terms
+    match /settings/{settingId} {
+      allow read, write: if true;
+    }
+
+    // Mail Queue
+    match /mail/{mailId} {
+      allow read, write: if true;
     }
 
     // Support Tickets Collection
