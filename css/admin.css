@@ -475,3 +475,101 @@ body {
   border-bottom: 3px solid #1a73e8 !important;
   background: transparent !important;
 }
+
+/* ═══════════════════════════════════════════════════════
+   ADMIN CONSOLE MOBILE RESPONSIVENESS
+═══════════════════════════════════════════════════════ */
+.sidebar-backdrop {
+  display: none;
+  position: fixed;
+  inset: 0;
+  background: rgba(32, 33, 36, 0.6);
+  backdrop-filter: blur(4px);
+  z-index: 999;
+}
+
+.mobile-menu-btn {
+  display: none !important;
+}
+
+@media (max-width: 768px) {
+  .mobile-menu-btn {
+    display: flex !important;
+  }
+  
+  .sidebar-backdrop.active {
+    display: block !important;
+  }
+
+  .sidebar {
+    position: fixed !important;
+    top: 0 !important;
+    bottom: 0 !important;
+    left: -270px !important;
+    width: 260px !important;
+    z-index: 1000 !important;
+    box-shadow: 4px 0 24px rgba(0,0,0,0.18) !important;
+    transition: transform 0.25s cubic-bezier(0.16, 1, 0.3, 1) !important;
+  }
+
+  .sidebar.active {
+    transform: translateX(270px) !important;
+  }
+
+  .top-header {
+    height: 56px !important;
+    padding: 0 12px !important;
+  }
+
+  .page-heading {
+    font-size: 16px !important;
+  }
+
+  .header-search input {
+    width: 140px !important;
+    height: 34px !important;
+  }
+
+  .view-body {
+    padding: 12px !important;
+  }
+
+  .stat-grid {
+    grid-template-columns: 1fr 1fr !important;
+    gap: 10px !important;
+  }
+
+  .stat-card {
+    padding: 14px 12px !important;
+  }
+
+  .stat-value {
+    font-size: 20px !important;
+  }
+
+  .toolbar, .table-header {
+    padding: 12px 14px !important;
+    flex-wrap: wrap !important;
+    gap: 8px !important;
+  }
+
+  .table-container {
+    overflow-x: auto !important;
+    -webkit-overflow-scrolling: touch !important;
+  }
+
+  .data-table th, .admin-table th, .data-table td, .admin-table td {
+    padding: 10px 12px !important;
+    font-size: 12.5px !important;
+  }
+}
+
+@media (max-width: 440px) {
+  .stat-grid {
+    grid-template-columns: 1fr !important;
+  }
+  .header-search {
+    display: none !important;
+  }
+}
+

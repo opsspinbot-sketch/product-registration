@@ -104,3 +104,52 @@
   border-color: #1a73e8;
   background: #e8f0fe;
 }
+
+/* ═══════════════════════════════════════════════════════
+   USER PORTAL MOBILE RESPONSIVENESS
+═══════════════════════════════════════════════════════ */
+@media (max-width: 768px) {
+  .g-header {
+    padding: 10px 14px !important;
+  }
+  .g-header-brand img {
+    height: 28px !important;
+  }
+  .g-header-title {
+    font-size: 14px !important;
+    padding-left: 8px !important;
+  }
+  .g-container, .portal-container {
+    padding: 0 10px !important;
+    margin: 12px auto 0 !important;
+  }
+  .g-card, .card-container {
+    padding: 20px 16px !important;
+    border-radius: 18px !important;
+  }
+  .g-heading, .step-title {
+    font-size: 20px !important;
+  }
+  .g-sub, .step-subtitle {
+    font-size: 13px !important;
+    margin-bottom: 16px !important;
+  }
+  .g-field {
+    margin-bottom: 12px !important;
+  }
+  .g-input, .g-select, .form-control, .form-select {
+    height: 42px !important;
+    font-size: 13.5px !important;
+  }
+  /* Force grid columns to single column on phone */
+  div[style*="grid-template-columns"] {
+    grid-template-columns: 1fr !important;
+    gap: 8px !important;
+  }
+  .btn-g-nav, .btn {
+    padding: 0 16px !important;
+    height: 40px !important;
+    font-size: 13.5px !important;
+  }
+}
+

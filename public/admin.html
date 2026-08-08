@@ -4,8 +4,9 @@
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
 <title>SpinBot Care Desk — Admin Console</title>
-<link rel="icon" type="image/svg+xml" href="assets/spinbot-favicon.svg"/>
-<link rel="shortcut icon" href="assets/spinbot-favicon.svg"/>
+<link rel="icon" type="image/jpeg" href="images/download.jpg"/>
+<link rel="shortcut icon" href="images/download.jpg"/>
+<link rel="apple-touch-icon" href="images/download.jpg"/>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Google+Sans:wght@400;500;600;700&family=Roboto:wght@400;500&display=swap"/>
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@2.44.0/tabler-icons.min.css"/>
 <link rel="stylesheet" href="./css/common.css?v=26.0.0"/>
@@ -70,8 +71,8 @@
   <aside class="sidebar" id="sidebar">
     <div class="sidebar-header">
       <a href="#" class="sidebar-brand" onclick="navigateTo('dashboard'); return false;" style="display: flex; align-items: center; gap: 8px;">
-        <img src="assets/spinbot-logo-white.svg" alt="SpinBot Logo" style="height: 32px; width: auto;"/>
-        <span>Admin Console</span>
+        <img src="images/download.jpg" alt="SpinBot Logo" style="height: 32px; width: auto; max-width: 130px; object-fit: contain;"/>
+        <span>Admin</span>
       </a>
     </div>
 
@@ -154,8 +155,14 @@
 
   <!-- Main Content Area -->
   <div class="main-content">
+    <div class="sidebar-backdrop" id="sidebarBackdrop" onclick="document.getElementById('sidebar').classList.remove('active'); this.classList.remove('active');"></div>
     <header class="top-header">
-      <h1 class="page-heading" id="viewTitle">Dashboard Overview</h1>
+      <div style="display: flex; align-items: center; gap: 12px;">
+        <button class="mobile-menu-btn" id="mobileMenuBtn" onclick="document.getElementById('sidebar').classList.toggle('active'); document.getElementById('sidebarBackdrop').classList.toggle('active');" style="background: none; border: none; font-size: 22px; color: var(--g-text-dark); cursor: pointer; padding: 4px; display: flex; align-items: center;">
+          <i class="ti ti-menu-2"></i>
+        </button>
+        <h1 class="page-heading" id="viewTitle">Dashboard Overview</h1>
+      </div>
       <div class="header-actions">
         <div class="header-search">
           <i class="ti ti-search"></i>

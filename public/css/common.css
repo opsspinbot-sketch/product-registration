@@ -274,3 +274,32 @@ a:hover { text-decoration: underline; }
 .toast-error .toast-icon { color: #f28b82; }
 .toast-warning .toast-icon { color: #fdd663; }
 .toast-info .toast-icon { color: #8ab4f8; }
+
+/* ═══════════════════════════════════════════════════════
+   MOBILE RESPONSIVE SYSTEM
+═══════════════════════════════════════════════════════ */
+@media (max-width: 768px) {
+  .modal-card {
+    max-width: 95vw;
+    margin: 10px;
+    border-radius: 16px;
+    max-height: 92vh;
+  }
+  .modal-body {
+    padding: 16px;
+  }
+  .modal-header, .modal-footer {
+    padding: 14px 16px;
+  }
+  .toast-container {
+    left: 12px;
+    right: 12px;
+    bottom: 12px;
+  }
+  .toast {
+    max-width: 100%;
+    padding: 10px 14px;
+    font-size: 13px;
+  }
+}
+
