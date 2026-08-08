@@ -146,6 +146,10 @@ export async function loginWithGoogle() {
     if (err.code === 'auth/configuration-not-found' || err.message?.includes('configuration-not-found')) {
       throw new Error("Access Denied! Google Auth is not configured in Firebase Console. Please log in using your Admin Email and Password.");
     }
+    if (err.code === 'auth/unauthorized-domain' || err.message?.includes('unauthorized-domain')) {
+      const currentHost = window.location.hostname;
+      throw new Error(`Domain Unauthorized: "${currentHost}" is not listed in Firebase Console. Please add "${currentHost}" under Firebase Console -> Authentication -> Settings -> Authorized Domains, or sign in below using your Admin Email and Password.`);
+    }
     if (err.code === 'auth/popup-closed-by-user') {
       throw new Error('Google Sign-In window was closed before completion.');
     }
@@ -388,8 +392,8 @@ export async function loginCustomerWithGoogle() {
       profile: newUserData
     };
   } catch (err) {
-    if (err.code === 'auth/configuration-not-found' || err.message?.includes('configuration-not-found')) {
-      console.warn('Firebase Google Auth Provider not enabled in Console. Using fallback customer sign-in mode.');
+    if (err.code === 'auth/configuration-not-found' || err.message?.includes('configuration-not-found') || err.code === 'auth/unauthorized-domain' || err.message?.includes('unauthorized-domain')) {
+      console.warn('Firebase Google Auth Provider not enabled or domain unauthorized in Console. Using fallback customer sign-in mode.');
       let session = getCustomerSession();
       if (!session) {
         session = {
