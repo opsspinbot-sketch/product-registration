@@ -929,11 +929,13 @@ export async function getProducts() {
   const localRemoved = getLocalData(LOCAL_REMOVED_PRODS_KEY);
   let fsList = [];
   let fsRemoved = [];
+  let hasFirestoreData = false;
 
   if (db) {
     try {
       const snap = await getDocs(collection(db, 'products'));
       snap.forEach(d => fsList.push({ id: d.id, ...d.data() }));
+      if (!snap.empty) hasFirestoreData = true;
     } catch (e) { }
 
     try {
@@ -944,6 +946,7 @@ export async function getProducts() {
         if (data.id) fsRemoved.push(data.id);
         if (Array.isArray(data.keys)) fsRemoved.push(...data.keys);
       });
+      if (!remSnap.empty) hasFirestoreData = true;
     } catch (e) { }
   }
 
@@ -959,15 +962,17 @@ export async function getProducts() {
     return (k1 && removedList.includes(k1)) || (k2 && removedList.includes(k2)) || (k3 && removedList.includes(k3));
   };
 
-  // 1. Add Default Catalog items if not removed
-  DEFAULT_CATALOG_PRODUCTS.forEach(p => {
-    const key = getProductKey(p);
-    if (!isRemoved(p)) {
-      map.set(key, p);
-    }
-  });
+  // Only fall back to hardcoded DEFAULT_CATALOG_PRODUCTS if Firestore has NO entries
+  if (!hasFirestoreData && localList.length === 0) {
+    DEFAULT_CATALOG_PRODUCTS.forEach(p => {
+      const key = getProductKey(p);
+      if (!isRemoved(p)) {
+        map.set(key, p);
+      }
+    });
+  }
 
-  // 2. Add Local items if not removed (overwrites/deduplicates default if updated)
+  // Add Local items if not removed
   localList.forEach(p => {
     const key = getProductKey(p);
     if (!isRemoved(p)) {
@@ -975,7 +980,7 @@ export async function getProducts() {
     }
   });
 
-  // 3. Add Firestore items if not removed (overwrites/deduplicates with remote DB version)
+  // Add Firestore items if not removed (overwrites default if present)
   fsList.forEach(p => {
     const key = getProductKey(p);
     if (!isRemoved(p)) {
@@ -1191,6 +1196,7 @@ export async function getMarketplaces() {
   const localRemoved = getLocalData(LOCAL_REMOVED_MKTS_KEY);
   let fsList = [];
   let fsRemoved = [];
+  let hasFirestoreData = false;
 
   if (db) {
     try {
@@ -1199,6 +1205,7 @@ export async function getMarketplaces() {
         const name = d.data().name;
         if (name) fsList.push(name.trim());
       });
+      if (!snap.empty) hasFirestoreData = true;
     } catch (e) { }
 
     try {
@@ -1207,11 +1214,13 @@ export async function getMarketplaces() {
         const name = d.id || d.data().name;
         if (name) fsRemoved.push(name.trim());
       });
+      if (!remSnap.empty) hasFirestoreData = true;
     } catch (e) { }
   }
 
   const removedList = [...new Set([...localRemoved, ...fsRemoved])].map(m => m.toLowerCase().trim());
-  const combined = Array.from(new Set([...DEFAULT_MARKETPLACES, ...localList, ...fsList]));
+  const baseList = hasFirestoreData ? [...localList, ...fsList] : [...DEFAULT_MARKETPLACES, ...localList, ...fsList];
+  const combined = Array.from(new Set(baseList));
   return combined.filter(m => !removedList.includes(m.toLowerCase().trim()));
 }
 
