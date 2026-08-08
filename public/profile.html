@@ -521,9 +521,9 @@
 </div>
 
 <script type="module">
-  import { showToast } from './js/ui-components.js?v=30.0.0';
-  import { getRegistrations } from './js/db-service.js?v=30.0.0';
-  import { getCustomerSession, logoutCustomer } from './js/auth-service.js?v=30.0.0';
+  import { showToast } from './js/ui-components.js?v=34.0.0';
+  import { getRegistrations } from './js/db-service.js?v=34.0.0';
+  import { getCustomerSession, logoutCustomer } from './js/auth-service.js?v=34.0.0';
 
   let activeCustomer = null;
 
@@ -632,7 +632,7 @@
 
         const daysLeft = Math.max(0, Math.ceil((endObj.getTime() - today.getTime()) / (1000 * 60 * 60 * 24)));
         const isExpired = daysLeft <= 0;
-        const monthsLeft = isExpired ? 0 : Math.ceil(daysLeft / 30);
+        const monthsLeft = isExpired ? 0 : Math.min(totalMonths, Math.ceil(daysLeft / 30.4375));
         const progressWidth = isExpired ? 0 : Math.min(100, Math.max(5, (daysLeft / totalDays) * 100));
 
         const statusClass = isExpired ? 'g-pill-expired' : 'g-pill-active';
