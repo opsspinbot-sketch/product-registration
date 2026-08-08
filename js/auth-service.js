@@ -524,34 +524,15 @@ export async function loginCustomerWithEmail(email) {
     }
   } catch(e) {}
 
-  // 4) Truly new customer — auto-create clean profile & session
-  const cleanName = email.split('@')[0].replace(/[._-]/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
-  const newProfile = {
-    customerUid: 'email_' + Math.floor(100000 + Math.random() * 900000),
-    googleUid: 'email_' + Math.floor(100000 + Math.random() * 900000),
-    fullName: cleanName || 'SpinBot Customer',
-    name: cleanName || 'SpinBot Customer',
-    email: email,
-    phone: '',
-    photoURL: '',
-    accountCreatedAt: new Date().toISOString(),
-    lastLogin: new Date().toISOString(),
-    provider: 'email',
-    totalRegistrations: 0,
-    status: 'Active'
+  // 4) Truly new customer — return isFirstTime: true to prompt for Full Name
+  return {
+    isFirstTime: true,
+    tempProfile: {
+      email,
+      fullName: '',
+      provider: 'email'
+    }
   };
-
-  saveCustomerSession(newProfile);
-
-  // Background save to Firestore customer_profiles
-  if (db) {
-    try {
-      const { collection: col, addDoc } = await import("https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js");
-      addDoc(col(db, 'customer_profiles'), newProfile).catch(() => {});
-    } catch(e) {}
-  }
-
-  return { isFirstTime: false, profile: newProfile };
 }
 
 export async function createOrSaveCustomerProfile(profileData) {
