@@ -1345,10 +1345,17 @@ async function openWarrantyDetails(id) {
   const status = reg.status || 'Active';
 
   const warrantyMonths = parseInt(warrantyPeriod) || 12;
-  const calc = calculateWarrantyDates(purchaseDate, warrantyMonths);
-  const endDate = reg.endDate || calc.endDate;
-  const daysRemaining = (typeof reg.daysRemaining === 'number') ? reg.daysRemaining : calc.daysRemaining;
-  const progressPercent = Math.min(100, Math.max(5, Math.round((daysRemaining / (warrantyMonths * 30)) * 100)));
+  let endObj = reg.endDate ? new Date(reg.endDate) : null;
+  if (!endObj || isNaN(endObj.getTime())) {
+    const pDate = purchaseDate ? new Date(purchaseDate) : new Date();
+    endObj = new Date(pDate);
+    endObj.setMonth(endObj.getMonth() + warrantyMonths);
+  }
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  const daysRemaining = Math.max(0, Math.ceil((endObj.getTime() - today.getTime()) / (1000 * 60 * 60 * 24)));
+  const endDate = endObj.toISOString().split('T')[0];
+  const progressPercent = daysRemaining > 0 ? Math.min(100, Math.max(5, Math.round((daysRemaining / (warrantyMonths * 30)) * 100))) : 0;
 
   const pImg = reg.productImage || reg.image;
 

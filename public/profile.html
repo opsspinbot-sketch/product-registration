@@ -618,16 +618,19 @@
       }
 
       container.innerHTML = userRegs.map(r => {
-        const totalMonths = parseInt(r.warrantyPeriod) || 12;
+        const totalMonths = parseInt(r.warrantyPeriod || r.warrantyMonths) || 12;
         const totalDays = totalMonths * 30;
 
-        let daysLeft = 365;
-        if (r.daysRemaining !== undefined && r.daysRemaining !== null) {
-          daysLeft = parseInt(r.daysRemaining);
-        } else if (r.endDate) {
-          daysLeft = Math.ceil((new Date(r.endDate).getTime() - Date.now()) / (1000 * 60 * 60 * 24));
+        let endObj = r.endDate ? new Date(r.endDate) : null;
+        if (!endObj || isNaN(endObj.getTime())) {
+          const pDate = r.purchaseDate ? new Date(r.purchaseDate) : new Date();
+          endObj = new Date(pDate);
+          endObj.setMonth(endObj.getMonth() + totalMonths);
         }
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
 
+        const daysLeft = Math.max(0, Math.ceil((endObj.getTime() - today.getTime()) / (1000 * 60 * 60 * 24)));
         const isExpired = daysLeft <= 0;
         const monthsLeft = isExpired ? 0 : Math.ceil(daysLeft / 30);
         const progressWidth = isExpired ? 0 : Math.min(100, Math.max(5, (daysLeft / totalDays) * 100));

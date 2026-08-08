@@ -469,8 +469,12 @@
     const rawObj = sessionStorage.getItem('sb_product_obj') || localStorage.getItem('sb_product_obj');
     let currentProd = { name: 'SpinBot IceDot Mag Mobile Cooler', sku: 'SB-ICEDOT-MAG1', warrantyPeriod: '12 Months' };
     if (rawObj) {
-      try { currentProd = typeof rawObj === 'string' && rawObj.trim().startsWith('{') ? JSON.parse(rawObj) : { name: rawObj }; } catch(e){}
+      try {
+        currentProd = typeof rawObj === 'string' && rawObj.trim().startsWith('{') ? JSON.parse(rawObj) : { name: rawObj, warrantyPeriod: '12 Months' };
+      } catch(e){}
     }
+
+    const parsedMonths = parseInt(currentProd.warrantyPeriod || currentProd.warrantyMonths) || 12;
 
     let invoiceUrl = '';
     if (selectedFile) {
@@ -493,7 +497,8 @@
         purchaseDate,
         purchasePlatform,
         invoiceNumber,
-        warrantyMonths: parseInt(currentProd.warrantyPeriod) || 12,
+        warrantyMonths: parsedMonths,
+        warrantyPeriod: `${parsedMonths} Months`,
         invoiceUrl
       }, selectedFile);
 

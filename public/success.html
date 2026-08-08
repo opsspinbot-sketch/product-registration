@@ -355,15 +355,19 @@
       if (document.getElementById('displayStartDate')) document.getElementById('displayStartDate').innerText = reg.purchaseDate || 'Today';
       if (document.getElementById('displayValidUntilDate')) document.getElementById('displayValidUntilDate').innerText = reg.endDate || 'Active';
 
-      const totalMonths = parseInt(reg.warrantyPeriod) || 12;
+      const totalMonths = parseInt(reg.warrantyPeriod || reg.warrantyMonths) || 12;
       const totalDays = totalMonths * 30;
-      let daysLeft = 365;
-      if (reg.daysRemaining !== undefined && reg.daysRemaining !== null) {
-        daysLeft = parseInt(reg.daysRemaining);
-      } else if (reg.endDate) {
-        daysLeft = Math.ceil((new Date(reg.endDate).getTime() - Date.now()) / (1000 * 60 * 60 * 24));
-      }
 
+      let endObj = reg.endDate ? new Date(reg.endDate) : null;
+      if (!endObj || isNaN(endObj.getTime())) {
+        const pDate = reg.purchaseDate ? new Date(reg.purchaseDate) : new Date();
+        endObj = new Date(pDate);
+        endObj.setMonth(endObj.getMonth() + totalMonths);
+      }
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+
+      const daysLeft = Math.max(0, Math.ceil((endObj.getTime() - today.getTime()) / (1000 * 60 * 60 * 24)));
       const isExpired = daysLeft <= 0;
       const monthsLeft = isExpired ? 0 : Math.ceil(daysLeft / 30);
       const progressWidth = isExpired ? 0 : Math.min(100, Math.max(5, (daysLeft / totalDays) * 100));

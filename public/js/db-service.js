@@ -61,8 +61,11 @@ export function calculateWarrantyDates(purchaseDateStr, warrantyMonths = 12) {
   endDate.setMonth(endDate.getMonth() + months);
 
   const today = new Date();
-  const diffTime = endDate - today;
+  today.setHours(0, 0, 0, 0);
+  const diffTime = endDate.getTime() - today.getTime();
   const daysRemaining = Math.max(0, Math.ceil(diffTime / (1000 * 60 * 60 * 24)));
+  const isExpired = daysRemaining === 0;
+  const monthsLeft = isExpired ? 0 : Math.ceil(daysRemaining / 30);
 
   let startIso = new Date().toISOString().split('T')[0];
   let endIso = new Date().toISOString().split('T')[0];
@@ -72,8 +75,10 @@ export function calculateWarrantyDates(purchaseDateStr, warrantyMonths = 12) {
   return {
     startDate: startIso,
     endDate: endIso,
+    months,
     daysRemaining,
-    isExpired: daysRemaining === 0
+    monthsLeft,
+    isExpired
   };
 }
 
