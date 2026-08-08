@@ -10,7 +10,7 @@ try {
 
   const firebaseConfig = {
     apiKey: window.__FIREBASE_API_KEY__ || "AIzaSyBL8RJ_pabY71EtNq0HjeNWLtUNE6XoPFQ",
-    authDomain: window.__FIREBASE_AUTH_DOMAIN__ || "invoice-af966.firebaseapp.com",
+    authDomain: window.__FIREBASE_AUTH_DOMAIN__ || "product-registration.product-register.workers.dev",
     projectId: window.__FIREBASE_PROJECT_ID__ || "invoice-af966",
     storageBucket: window.__FIREBASE_STORAGE_BUCKET__ || "invoice-af966.firebasestorage.app",
     messagingSenderId: window.__FIREBASE_MESSAGING_SENDER_ID__ || "583941270564",
