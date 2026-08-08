@@ -1931,7 +1931,7 @@ async function renderSettingsView() {
   const container = document.getElementById('viewContainer');
   if (!container) return;
   await syncAllowedAdminEmailsFromDB();
-  const currentMkts = getMarketplaces() || [];
+  const currentMkts = (await getMarketplaces()) || [];
 
   container.innerHTML = `
     <div class="card-table-wrapper" style="padding: 32px; max-width: 760px; margin: 0 auto;">
@@ -2138,11 +2138,11 @@ window.handleRemoveMarketplace = async (name) => {
 // -------------------------------------------------------------
 // 10. MARKETPLACES VIEW (Dedicated Full-Page Section)
 // -------------------------------------------------------------
-function renderMarketplacesView() {
+async function renderMarketplacesView() {
   const container = document.getElementById('viewContainer');
   if (!container) return;
 
-  const mkts = getMarketplaces() || [];
+  const mkts = (await getMarketplaces()) || [];
 
   container.innerHTML = `
     <div style="max-width: 820px; margin: 0 auto;">
@@ -2242,12 +2242,12 @@ window.handleAddMarketplace = async () => {
   }
   await addMarketplace(name);
   showToast(`"${name}" added to customer registration form!`, 'success');
-  if (currentView === 'marketplaces') renderMarketplacesView();
-  else renderSettingsView();
+  if (currentView === 'marketplaces') await renderMarketplacesView();
+  else await renderSettingsView();
 };
 
 window.handleRemoveMktView = async (name) => {
   await deleteMarketplace(name);
   showToast(`"${name}" removed from registration form`, 'info');
-  renderMarketplacesView();
+  await renderMarketplacesView();
 };

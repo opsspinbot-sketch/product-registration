@@ -1183,49 +1183,74 @@ export async function getRecentActivity() {
 const LOCAL_MKTS_KEY = 'sb_local_marketplaces';
 const LOCAL_REMOVED_MKTS_KEY = 'sb_removed_marketplaces';
 
-export function getMarketplaces() {
+export async function getMarketplaces() {
   const localList = getLocalData(LOCAL_MKTS_KEY);
-  const removedList = getLocalData(LOCAL_REMOVED_MKTS_KEY);
-  const combined = Array.from(new Set([...DEFAULT_MARKETPLACES, ...localList]));
-  return combined.filter(m => !removedList.includes(m));
+  const localRemoved = getLocalData(LOCAL_REMOVED_MKTS_KEY);
+  let fsList = [];
+  let fsRemoved = [];
+
+  if (db) {
+    try {
+      const snap = await getDocs(collection(db, 'marketplaces'));
+      snap.forEach(d => {
+        const name = d.data().name;
+        if (name) fsList.push(name.trim());
+      });
+    } catch (e) { }
+
+    try {
+      const remSnap = await getDocs(collection(db, 'deleted_marketplaces'));
+      remSnap.forEach(d => {
+        const name = d.id || d.data().name;
+        if (name) fsRemoved.push(name.trim());
+      });
+    } catch (e) { }
+  }
+
+  const removedList = [...new Set([...localRemoved, ...fsRemoved])].map(m => m.toLowerCase().trim());
+  const combined = Array.from(new Set([...DEFAULT_MARKETPLACES, ...localList, ...fsList]));
+  return combined.filter(m => !removedList.includes(m.toLowerCase().trim()));
 }
 
 export async function addMarketplace(name) {
   const cleanName = (name || '').trim();
   if (!cleanName) return;
 
-  // Un-remove if it was previously removed
+  // Un-remove if previously deleted
   try {
-    const removedList = getLocalData(LOCAL_REMOVED_MKTS_KEY).filter(m => m !== cleanName);
-    localStorage.setItem(LOCAL_REMOVED_MKTS_KEY, JSON.stringify(removedList));
+    const localRemoved = getLocalData(LOCAL_REMOVED_MKTS_KEY).filter(m => m.toLowerCase().trim() !== cleanName.toLowerCase());
+    localStorage.setItem(LOCAL_REMOVED_MKTS_KEY, JSON.stringify(localRemoved));
   } catch (e) {}
 
   saveLocalData(LOCAL_MKTS_KEY, cleanName);
 
   if (db) {
     try {
-      await addDoc(collection(db, 'marketplaces'), { name: cleanName, createdAt: new Date().toISOString() });
-    } catch (e) {}
+      const { doc: dDoc, deleteDoc: delDoc, collection: col, addDoc: aDoc } = await import("https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js");
+      await delDoc(dDoc(db, 'deleted_marketplaces', cleanName)).catch(() => {});
+      await aDoc(col(db, 'marketplaces'), { name: cleanName, createdAt: new Date().toISOString() });
+    } catch (e) { }
   }
 }
 
 export async function deleteMarketplace(name) {
+  const cleanName = (name || '').trim();
+  if (!cleanName) return;
+
   try {
-    // 1. Remove from added local list
-    const list = getLocalData(LOCAL_MKTS_KEY).filter(m => m !== name);
+    // 1. Remove from local storage list
+    const list = getLocalData(LOCAL_MKTS_KEY).filter(m => m.toLowerCase().trim() !== cleanName.toLowerCase());
     localStorage.setItem(LOCAL_MKTS_KEY, JSON.stringify(list));
+    saveLocalData(LOCAL_REMOVED_MKTS_KEY, cleanName);
 
-    // 2. Track in removed list (for default items)
-    saveLocalData(LOCAL_REMOVED_MKTS_KEY, name);
-
-    // 3. Delete from Firestore if exists
+    // 2. Sync deletion to Firestore so all clients filter it out
     if (db) {
-      const q = query(collection(db, 'marketplaces'), where('name', '==', name));
-      const snap = await getDocs(q);
+      const { doc: dDoc, setDoc: sDoc, deleteDoc: delDoc, collection: col, query: q, where: w, getDocs: gDocs } = await import("https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js");
+      await sDoc(dDoc(db, 'deleted_marketplaces', cleanName), { name: cleanName, deletedAt: new Date().toISOString() }, { merge: true }).catch(() => {});
+
+      const snap = await gDocs(q(col(db, 'marketplaces'), w('name', '==', cleanName)));
       snap.forEach(async (d) => {
-        try {
-          await deleteDoc(doc(db, 'marketplaces', d.id));
-        } catch (err) {}
+        try { await delDoc(dDoc(db, 'marketplaces', d.id)); } catch (err) {}
       });
     }
   } catch(e) {}
