@@ -926,26 +926,41 @@ const LOCAL_REMOVED_PRODS_KEY = 'sb_removed_products';
 
 export async function getProducts() {
   const localList = getLocalData(LOCAL_PRODS_KEY);
-  const removedList = getLocalData(LOCAL_REMOVED_PRODS_KEY);
+  const localRemoved = getLocalData(LOCAL_REMOVED_PRODS_KEY);
   let fsList = [];
+  let fsRemoved = [];
 
   if (db) {
     try {
       const snap = await getDocs(collection(db, 'products'));
       snap.forEach(d => fsList.push({ id: d.id, ...d.data() }));
     } catch (e) { }
+
+    try {
+      const remSnap = await getDocs(collection(db, 'deleted_products'));
+      remSnap.forEach(d => {
+        const data = d.data();
+        fsRemoved.push(d.id);
+        if (Array.isArray(data.keys)) fsRemoved.push(...data.keys);
+      });
+    } catch (e) { }
   }
 
+  const removedList = [...new Set([...localRemoved, ...fsRemoved])].map(k => String(k).toLowerCase().trim());
   const map = new Map();
-
-  // Helper for deduplication key (prefer SKU, fallback to Name)
   const getProductKey = (p) => (p.sku || p.name || p.id || '').toLowerCase().trim();
+
+  const isRemoved = (p) => {
+    const k1 = (p.id || '').toLowerCase().trim();
+    const k2 = (p.sku || '').toLowerCase().trim();
+    const k3 = (p.name || '').toLowerCase().trim();
+    return removedList.includes(k1) || removedList.includes(k2) || removedList.includes(k3);
+  };
 
   // 1. Add Default Catalog items if not removed
   DEFAULT_CATALOG_PRODUCTS.forEach(p => {
     const key = getProductKey(p);
-    const rawId = p.id || p.sku || p.name;
-    if (!removedList.includes(rawId) && !removedList.includes(p.id) && !removedList.includes(p.sku) && !removedList.includes(key)) {
+    if (!isRemoved(p)) {
       map.set(key, p);
     }
   });
@@ -953,8 +968,7 @@ export async function getProducts() {
   // 2. Add Local items if not removed (overwrites/deduplicates default if updated)
   localList.forEach(p => {
     const key = getProductKey(p);
-    const rawId = p.id || p.sku || p.name;
-    if (!removedList.includes(rawId) && !removedList.includes(p.id) && !removedList.includes(p.sku) && !removedList.includes(key)) {
+    if (!isRemoved(p)) {
       map.set(key, { id: p.id || 'loc_' + Math.random(), ...p });
     }
   });
@@ -962,8 +976,7 @@ export async function getProducts() {
   // 3. Add Firestore items if not removed (overwrites/deduplicates with remote DB version)
   fsList.forEach(p => {
     const key = getProductKey(p);
-    const rawId = p.id || p.sku || p.name;
-    if (!removedList.includes(rawId) && !removedList.includes(p.id) && !removedList.includes(p.sku) && !removedList.includes(key)) {
+    if (!isRemoved(p)) {
       map.set(key, { id: p.id, ...p });
     }
   });
@@ -1021,19 +1034,20 @@ export async function deleteProduct(id, pObj = null) {
       if (k) saveLocalData(LOCAL_REMOVED_PRODS_KEY, k);
     });
 
-    // 3. Delete from Firestore if it exists
-    if (db && !id.startsWith('loc_')) {
+    // 3. Sync deletion to Firestore so all clients get the deletion
+    if (db) {
       try {
-        await deleteDoc(doc(db, 'products', id));
-      } catch (e) {
-        try {
-          const q = query(collection(db, 'products'), where('sku', '==', id));
-          const snap = await getDocs(q);
-          snap.forEach(async (d) => {
-            try { await deleteDoc(doc(db, 'products', d.id)); } catch(err) {}
-          });
-        } catch(err) {}
-      }
+        const { doc: dDoc, setDoc: sDoc, deleteDoc: delDoc } = await import("https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js");
+        await sDoc(dDoc(db, 'deleted_products', String(id)), {
+          id: String(id),
+          keys: keysToRemove,
+          deletedAt: new Date().toISOString()
+        }, { merge: true }).catch(() => {});
+
+        if (!String(id).startsWith('loc_')) {
+          await delDoc(dDoc(db, 'products', String(id))).catch(() => {});
+        }
+      } catch (e) { }
     }
   } catch(e) {}
 }

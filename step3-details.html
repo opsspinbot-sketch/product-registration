@@ -321,12 +321,16 @@
         </div>
       </div>
 
-      <!-- Terms Checkbox -->
-      <div style="margin: 20px 0;">
-        <label style="display: flex; align-items: flex-start; gap: 8px; font-size: 13px; color: var(--g-text-dark); cursor: pointer;">
-          <input type="checkbox" id="termsCheck" required style="margin-top: 3px; accent-color: #1a73e8;"/>
-          <span>I accept the Terms &amp; Conditions and declare that the purchase details provided are true.</span>
+      <!-- Terms Checkbox & View Modal Button -->
+      <div style="margin: 20px 0; background: var(--g-surface); border: 1px solid var(--g-border); padding: 14px 16px; border-radius: 14px; display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap;">
+        <label style="display: flex; align-items: center; gap: 10px; font-size: 13px; color: var(--g-text-dark); cursor: pointer; margin: 0; flex: 1;">
+          <input type="checkbox" id="termsCheck" required style="width: 18px; height: 18px; accent-color: #1a73e8; cursor: pointer;"/>
+          <span>I accept the <button type="button" onclick="openTermsModal()" style="background: none; border: none; color: #1a73e8; font-weight: 600; text-decoration: underline; cursor: pointer; padding: 0;">Terms &amp; Conditions</button> and confirm details are true.</span>
         </label>
+        <button type="button" onclick="openTermsModal()" style="background: #ffffff; border: 1px solid #1a73e8; color: #1a73e8; font-size: 12.5px; font-weight: 600; padding: 6px 14px; border-radius: 18px; cursor: pointer; display: inline-flex; align-items: center; gap: 6px; transition: all 0.2s;" onmouseover="this.style.background='#e8f0fe'" onmouseout="this.style.background='#ffffff'">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>
+          <span>View Terms</span>
+        </button>
       </div>
 
       <!-- Submit Buttons -->
@@ -341,10 +345,49 @@
   </div>
 </div>
 
+<!-- Terms & Conditions Modal -->
+<div id="termsModal" class="modal-backdrop" style="display: none; position: fixed; inset: 0; background: rgba(32,33,36,0.6); z-index: 9999; align-items: center; justify-content: center; padding: 20px;">
+  <div style="background: #ffffff; border-radius: 24px; max-width: 580px; width: 100%; max-height: 85vh; display: flex; flex-direction: column; box-shadow: 0 4px 24px rgba(0,0,0,0.18); border: 1px solid var(--g-border); overflow: hidden;">
+    <div style="display: flex; align-items: center; justify-content: space-between; padding: 20px 24px; border-bottom: 1px solid var(--g-border);">
+      <h3 style="font-size: 18px; font-weight: 600; color: var(--g-text-dark); margin: 0; display: flex; align-items: center; gap: 8px;">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#1a73e8" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+        SpinBot Warranty Terms &amp; Conditions
+      </h3>
+      <button type="button" onclick="closeTermsModal()" style="background: none; border: none; font-size: 22px; color: var(--g-text-sub); cursor: pointer;">&times;</button>
+    </div>
+    <div id="termsContentBody" style="padding: 24px; overflow-y: auto; font-size: 13.5px; line-height: 1.6; color: var(--g-text-dark); white-space: pre-wrap;">Loading Terms &amp; Conditions...</div>
+    <div style="padding: 16px 24px; border-top: 1px solid var(--g-border); background: var(--g-surface); text-align: right;">
+      <button type="button" onclick="closeTermsModal(); document.getElementById('termsCheck').checked = true;" class="btn-g-submit" style="display: inline-flex; width: auto; padding: 0 24px; height: 38px;">
+        I Accept Terms
+      </button>
+    </div>
+  </div>
+</div>
+
 <script type="module">
   import { showToast } from './js/ui-components.js?v=24.0.0';
-  import { createWarrantyRegistration } from './js/db-service.js?v=24.0.0';
+  import { createWarrantyRegistration, getTermsAndConditions } from './js/db-service.js?v=24.0.0';
   import { uploadToR2 } from './js/r2-upload.js?v=24.0.0';
+
+  window.openTermsModal = async () => {
+    const modal = document.getElementById('termsModal');
+    const content = document.getElementById('termsContentBody');
+    if (modal) modal.style.display = 'flex';
+    if (content) {
+      content.textContent = 'Loading Terms & Conditions...';
+      try {
+        const text = await getTermsAndConditions();
+        content.textContent = text || 'No terms specified.';
+      } catch (e) {
+        content.textContent = 'SpinBot Warranty Terms & Conditions:\n\n1. Warranty applies to manufacturing defects only.\n2. Invoice and Serial number proof required.\n3. Physical or liquid damage is not covered.';
+      }
+    }
+  };
+
+  window.closeTermsModal = () => {
+    const modal = document.getElementById('termsModal');
+    if (modal) modal.style.display = 'none';
+  };
 
   let selectedFile = null;
 
