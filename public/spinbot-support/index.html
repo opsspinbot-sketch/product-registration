@@ -1,0 +1,252 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>SpinBot Support Hub — Warranty, Order Tracking & Device Tester</title>
+  <meta name="description" content="Official SpinBot Support Portal. Register product warranty, track order shipment status, test your gaming gear and device latency online."/>
+  <link rel="icon" type="image/png" href="../images/image.png"/>
+  <link rel="stylesheet" href="styles.css"/>
+  <!-- Tabler Icons -->
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css"/>
+</head>
+<body>
+
+  <!-- Navbar -->
+  <nav class="navbar">
+    <div class="container nav-wrapper">
+      <a href="index.html" class="brand-logo">
+        <div class="brand-icon-box">S</div>
+        <div class="brand-title">SpinBot <span>Support Hub</span></div>
+      </a>
+      
+      <ul class="nav-links">
+        <li><a href="#services" class="nav-link">Services</a></li>
+        <li><a href="#tracking" class="nav-link">Track Order</a></li>
+        <li><a href="#faq" class="nav-link">FAQs</a></li>
+      </ul>
+
+      <a href="mailto:support@spinbot.co.in" class="btn-contact-nav">
+        <i class="ti ti-mail"></i> Contact Desk
+      </a>
+    </div>
+  </nav>
+
+  <!-- Hero Section -->
+  <header class="hero-section">
+    <div class="container">
+      <div class="hero-badge">
+        <i class="ti ti-headset"></i> 24/7 Official Assistance Desk
+      </div>
+      
+      <h1 class="hero-title">
+        How can we help you with your <br/>
+        <span class="hero-title-gradient">SpinBot Gaming Gear?</span>
+      </h1>
+      
+      <p class="hero-subtitle">
+        Activate manufacturer warranty, track your shipment live, or diagnose your gaming triggers & cooling fans in real-time.
+      </p>
+
+      <!-- Search Input -->
+      <div class="search-container">
+        <div class="search-input-wrapper">
+          <i class="ti ti-search search-icon"></i>
+          <input type="text" id="mainSearchInput" class="search-input" placeholder="Search warranty, order tracking, device test, or FAQs..."/>
+          <button type="button" class="search-btn" onclick="handleSearchQuery()">Search</button>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <!-- 3 Core Services Cards Section -->
+  <section class="features-section" id="services">
+    <div class="container">
+      <div class="section-header">
+        <h2 class="section-title">Essential Services</h2>
+        <p class="section-sub">Select a service below to get instant assistance</p>
+      </div>
+
+      <div class="cards-grid">
+
+        <!-- Card 1: Product Registration -->
+        <article class="feature-card" id="cardRegistration">
+          <div>
+            <div class="card-icon-container">
+              <i class="ti ti-shield-check" style="font-size: 32px;"></i>
+            </div>
+            <span class="card-tag">Warranty Portal</span>
+            <h3 class="card-title">Product Registration</h3>
+            <p class="card-desc">
+              Register your SpinBot products to claim 12-month manufacturer warranty protection, upload invoice proof, and view active coverage details.
+            </p>
+          </div>
+          
+          <div class="card-actions">
+            <a href="https://product-registration.product-register.workers.dev/" target="_blank" class="btn-card-cta btn-primary-cta">
+              <span>Open Warranty Portal</span>
+              <i class="ti ti-arrow-up-right"></i>
+            </a>
+          </div>
+        </article>
+
+        <!-- Card 2: Track Your Order -->
+        <article class="feature-card" id="cardTracking">
+          <div>
+            <div class="card-icon-container" style="color: var(--secondary-accent); background: rgba(0, 229, 255, 0.1); border-color: rgba(0, 229, 255, 0.2);">
+              <i class="ti ti-truck-delivery" style="font-size: 32px;"></i>
+            </div>
+            <span class="card-tag" style="color: var(--secondary-accent);">Shipment Tracking</span>
+            <h3 class="card-title">Track Your Order</h3>
+            <p class="card-desc">
+              Check live delivery updates, estimated arrival times, and courier tracking details powered by Shiprocket.
+            </p>
+
+            <!-- Quick AWB Lookup Form -->
+            <form class="card-tracking-form" onsubmit="handleQuickTrack(event)">
+              <div class="quick-track-group">
+                <input type="text" id="quickAwbInput" class="track-input" placeholder="Enter AWB or Order ID..."/>
+                <button type="submit" class="btn-track-submit">Track</button>
+              </div>
+            </form>
+          </div>
+          
+          <div class="card-actions">
+            <a href="https://spinbot.shiprocket.co/tracking/" target="_blank" class="btn-card-cta btn-secondary-cta">
+              <span>Visit Tracking Portal</span>
+              <i class="ti ti-external-link"></i>
+            </a>
+          </div>
+        </article>
+
+        <!-- Card 3: Device Tester -->
+        <article class="feature-card" id="cardTester">
+          <div>
+            <div class="card-icon-container" style="color: #ff9800; background: rgba(255, 152, 0, 0.1); border-color: rgba(255, 152, 0, 0.2);">
+              <i class="ti ti-device-gamepad-2" style="font-size: 32px;"></i>
+            </div>
+            <span class="card-tag" style="color: #ff9800;">Hardware Diagnostics</span>
+            <h3 class="card-title">Device &amp; Gear Tester</h3>
+            <p class="card-desc">
+              Test your SpinBot mobile coolers, gaming triggers, audio latency, touch responsiveness, and button actuation online.
+            </p>
+          </div>
+          
+          <div class="card-actions">
+            <button type="button" class="btn-card-cta btn-primary-cta" style="background: linear-gradient(135deg, #ff9800 0%, #ff5722 100%);" onclick="launchModalViewer('https://spinbotgeartest.netlify.app/', 'SpinBot Device & Gear Tester')">
+              <span>Launch Tester</span>
+              <i class="ti ti-player-play"></i>
+            </button>
+          </div>
+        </article>
+
+      </div>
+    </div>
+  </section>
+
+  <!-- Support Desk Contact Banner -->
+  <section class="container">
+    <div class="support-banner">
+      <div class="banner-content">
+        <h3>Still need assistance with your order or gear?</h3>
+        <p>Our dedicated customer desk is active Monday through Saturday to resolve warranty claims, order status, or technical inquiries.</p>
+      </div>
+      <div class="banner-buttons">
+        <a href="https://api.whatsapp.com/send?phone=919876543210&text=Hi%20SpinBot%20Support,%20I%20need%20help%20with%20my%20product" target="_blank" class="btn-whatsapp">
+          <i class="ti ti-brand-whatsapp" style="font-size: 20px;"></i>
+          <span>WhatsApp Us</span>
+        </a>
+        <a href="mailto:support@spinbot.co.in" class="btn-email">
+          <i class="ti ti-mail" style="font-size: 20px;"></i>
+          <span>Email Support</span>
+        </a>
+      </div>
+    </div>
+  </section>
+
+  <!-- FAQ Accordion Section -->
+  <section class="faq-section" id="faq">
+    <div class="container faq-container">
+      <div class="section-header">
+        <h2 class="section-title">Frequently Asked Questions</h2>
+        <p class="section-sub">Find quick answers to common queries</p>
+      </div>
+
+      <div id="faqList">
+
+        <div class="faq-item">
+          <div class="faq-question" onclick="toggleFaq(this)">
+            <span>How do I register my SpinBot product for warranty?</span>
+            <div class="faq-icon"><i class="ti ti-chevron-down"></i></div>
+          </div>
+          <div class="faq-answer">
+            Simply visit our <a href="https://product-registration.product-register.workers.dev/" target="_blank" style="color: var(--primary-accent);">Product Registration Portal</a>, select your product model, enter purchase date and platform (Amazon, Flipkart, SpinBot Store), and upload a copy of your purchase invoice. You will receive an instant Registration ID.
+          </div>
+        </div>
+
+        <div class="faq-item">
+          <div class="faq-question" onclick="toggleFaq(this)">
+            <span>How long does delivery take and how can I track my shipment?</span>
+            <div class="faq-icon"><i class="ti ti-chevron-down"></i></div>
+          </div>
+          <div class="faq-answer">
+            Orders are typically dispatched within 24 hours. You can track your real-time shipment status anytime by entering your AWB or Order ID in our <a href="#tracking" style="color: var(--secondary-accent);">Shipment Tracking card</a> above or directly on our <a href="https://spinbot.shiprocket.co/tracking/" target="_blank" style="color: var(--secondary-accent);">Shiprocket Tracking page</a>.
+          </div>
+        </div>
+
+        <div class="faq-item">
+          <div class="faq-question" onclick="toggleFaq(this)">
+            <span>What is the SpinBot Device &amp; Gear Tester?</span>
+            <div class="faq-icon"><i class="ti ti-chevron-down"></i></div>
+          </div>
+          <div class="faq-answer">
+            The SpinBot Gear Tester is a free online tool to diagnose trigger responsiveness, touch latencies, audio channels, and hardware performance before or during mobile gaming sessions. Launch it directly via our <a href="https://spinbotgeartest.netlify.app/" target="_blank" style="color: #ff9800;">Device Tester Portal</a>.
+          </div>
+        </div>
+
+        <div class="faq-item">
+          <div class="faq-question" onclick="toggleFaq(this)">
+            <span>What is covered under SpinBot Manufacturer Warranty?</span>
+            <div class="faq-icon"><i class="ti ti-chevron-down"></i></div>
+          </div>
+          <div class="faq-answer">
+            SpinBot warranty covers all manufacturing defects, internal component failures, and electrical malfunctions for 6 to 12 months (depending on product category). Physical damage, water exposure, or unauthorized tampering are not covered.
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </section>
+
+  <!-- Modal Popup Container -->
+  <div class="modal-overlay" id="appModalOverlay">
+    <div class="modal-window">
+      <div class="modal-header">
+        <div class="modal-title" id="modalTitleText">
+          <i class="ti ti-layout-window"></i> SpinBot Interactive Viewer
+        </div>
+        <button type="button" class="btn-close-modal" onclick="closeModalViewer()">&times;</button>
+      </div>
+      <div class="modal-body">
+        <iframe id="modalIframe" src="about:blank" class="modal-iframe" title="Interactive Tool Viewer"></iframe>
+      </div>
+    </div>
+  </div>
+
+  <!-- Footer -->
+  <footer class="footer">
+    <div class="container footer-content">
+      <div>
+        &copy; <span id="yearText">2026</span> <strong>SpinBot Official Support Portal</strong>. All rights reserved.
+      </div>
+      <div style="display: flex; gap: 20px;">
+        <a href="https://product-registration.product-register.workers.dev/" target="_blank" style="color: var(--text-sub); text-decoration: none;">Registration</a>
+        <a href="https://spinbot.shiprocket.co/tracking/" target="_blank" style="color: var(--text-sub); text-decoration: none;">Tracking</a>
+        <a href="https://spinbotgeartest.netlify.app/" target="_blank" style="color: var(--text-sub); text-decoration: none;">Device Tester</a>
+      </div>
+    </div>
+  </footer>
+
+  <script src="app.js"></script>
+</body>
+</html>

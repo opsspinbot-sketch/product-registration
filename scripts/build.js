@@ -20,7 +20,8 @@ const itemsToCopy = [
   'css',
   'js',
   'images',
-  'assets'
+  'assets',
+  'spinbot-support'
 ];
 
 for (const item of itemsToCopy) {
