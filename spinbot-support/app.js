@@ -1,15 +1,13 @@
 /* ==========================================================================
-   SpinBot Support Hub — Interactive Application Logic
+   SpinBot Support — Official Google Help Center Script
    ========================================================================== */
 
 document.addEventListener('DOMContentLoaded', () => {
-  // Update footer year dynamically
   const yearEl = document.getElementById('yearText');
   if (yearEl) {
     yearEl.textContent = new Date().getFullYear();
   }
 
-  // Bind main search input listener
   const searchInput = document.getElementById('mainSearchInput');
   if (searchInput) {
     searchInput.addEventListener('input', (e) => filterSupportContent(e.target.value));
@@ -21,7 +19,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
 /**
  * Handle Quick Track Form submission
- * Redirects directly to Shiprocket tracking page
  */
 window.handleQuickTrack = function(event) {
   if (event) event.preventDefault();
@@ -30,7 +27,6 @@ window.handleQuickTrack = function(event) {
   const val = input.value.trim();
   
   if (val) {
-    // Shiprocket tracking URL with order ID / AWB
     const trackingUrl = `https://spinbot.shiprocket.co/tracking/${encodeURIComponent(val)}`;
     window.open(trackingUrl, '_blank');
   } else {
@@ -39,45 +35,35 @@ window.handleQuickTrack = function(event) {
 };
 
 /**
- * Toggle FAQ Accordion Items
+ * Toggle FAQ Accordion Cards
  */
 window.toggleFaq = function(element) {
-  const item = element.parentElement;
-  if (!item) return;
+  const card = element.parentElement;
+  if (!card) return;
 
-  const isActive = item.classList.contains('active');
+  const isActive = card.classList.contains('active');
   
-  // Close all open FAQs
-  document.querySelectorAll('.faq-item').forEach(el => {
+  document.querySelectorAll('.faq-card').forEach(el => {
     el.classList.remove('active');
   });
 
-  // Toggle clicked FAQ
   if (!isActive) {
-    item.classList.add('active');
+    card.classList.add('active');
   }
 };
 
 /**
- * Filter FAQs and Cards based on Search Input
+ * Filter Content based on Search Input
  */
 window.filterSupportContent = function(query) {
   const q = (query || '').toLowerCase().trim();
 
-  // Filter FAQ items
-  const faqItems = document.querySelectorAll('.faq-item');
-  faqItems.forEach(item => {
+  document.querySelectorAll('.faq-card').forEach(item => {
     const text = item.textContent.toLowerCase();
-    if (!q || text.includes(q)) {
-      item.style.display = 'block';
-    } else {
-      item.style.display = 'none';
-    }
+    item.style.display = (!q || text.includes(q)) ? 'block' : 'none';
   });
 
-  // Filter Core Service Cards
-  const cards = document.querySelectorAll('.feature-card');
-  cards.forEach(card => {
+  document.querySelectorAll('.google-card').forEach(card => {
     const text = card.textContent.toLowerCase();
     if (!q || text.includes(q)) {
       card.style.opacity = '1';
@@ -95,13 +81,13 @@ window.filterSupportContent = function(query) {
 window.handleSearchQuery = function() {
   const input = document.getElementById('mainSearchInput');
   if (!input) return;
-  const val = input.value.trim();
+  const val = input.value.trim().toLowerCase();
 
-  if (val.toLowerCase().includes('track') || val.toLowerCase().includes('ship') || val.toLowerCase().includes('order')) {
+  if (val.includes('track') || val.includes('ship') || val.includes('order')) {
     document.getElementById('cardTracking')?.scrollIntoView({ behavior: 'smooth' });
-  } else if (val.toLowerCase().includes('test') || val.toLowerCase().includes('gear') || val.toLowerCase().includes('trigger')) {
+  } else if (val.includes('test') || val.includes('gear') || val.includes('trigger')) {
     document.getElementById('cardTester')?.scrollIntoView({ behavior: 'smooth' });
-  } else if (val.toLowerCase().includes('reg') || val.toLowerCase().includes('warrant') || val.toLowerCase().includes('claim')) {
+  } else if (val.includes('reg') || val.includes('warrant') || val.includes('claim')) {
     document.getElementById('cardRegistration')?.scrollIntoView({ behavior: 'smooth' });
   } else {
     document.getElementById('faq')?.scrollIntoView({ behavior: 'smooth' });
@@ -119,7 +105,7 @@ window.launchModalViewer = function(url, title) {
   if (!overlay || !iframe) return;
 
   if (titleEl) {
-    titleEl.innerHTML = `<i class="ti ti-layout-window"></i> ${title || 'SpinBot Interactive Viewer'}`;
+    titleEl.querySelector('span').textContent = title || 'SpinBot Interactive Tool';
   }
 
   iframe.src = url;
@@ -139,9 +125,6 @@ window.closeModalViewer = function() {
   document.body.style.overflow = 'auto';
 };
 
-// Close modal on escape key press
 document.addEventListener('keydown', (e) => {
-  if (e.key === 'Escape') {
-    closeModalViewer();
-  }
+  if (e.key === 'Escape') closeModalViewer();
 });
