@@ -1019,10 +1019,7 @@ export async function getProducts() {
 
   if (db) {
     try {
-      // Read the product collection independently. Previously this used a
-      // single Promise.all with deleted_products: a slow/failed deletion read
-      // caused *all* live products to be discarded as well.
-      const withTimeout = (promise, ms = 2000) => Promise.race([
+      const withTimeout = (promise, ms = 8000) => Promise.race([
         promise,
         new Promise(resolve => setTimeout(() => resolve(null), ms))
       ]);
@@ -1032,9 +1029,6 @@ export async function getProducts() {
       ]);
 
       if (snapResult && snapResult.forEach) {
-        // The Firestore document ID is the unique catalog key. Some older
-        // product documents also contain an `id` field; allowing it to replace
-        // d.id merges unrelated products and makes entries disappear.
         snapResult.forEach(d => fsList.push({ ...d.data(), id: d.id }));
       }
       if (remSnapResult && remSnapResult.forEach) {

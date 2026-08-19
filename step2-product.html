@@ -517,8 +517,7 @@
   // 2. Hydrate full live catalog in background from Firestore
   async function loadProducts() {
     try {
-      const timeout = new Promise((_, reject) => setTimeout(() => reject(new Error('Load timeout')), 3000));
-      const res = await Promise.race([getProducts(), timeout]);
+      const res = await getProducts();
       if (Array.isArray(res) && res.length > 0) {
         products = res;
         renderTabs();
