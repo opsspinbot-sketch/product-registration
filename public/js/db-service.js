@@ -1022,7 +1022,7 @@ export async function getProducts() {
       // Read the product collection independently. Previously this used a
       // single Promise.all with deleted_products: a slow/failed deletion read
       // caused *all* live products to be discarded as well.
-      const withTimeout = (promise, ms = 4000) => Promise.race([
+      const withTimeout = (promise, ms = 2000) => Promise.race([
         promise,
         new Promise(resolve => setTimeout(() => resolve(null), ms))
       ]);

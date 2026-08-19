@@ -374,27 +374,6 @@
     selectedProduct = { name: savedName, sku: 'N/A', warrantyPeriod: '12 Months' };
   }
 
-  // 1. Render default catalog INSTANTLY (0ms delay)
-  renderTabs();
-  renderDropdown();
-  if (selectedProduct) updateChipUI();
-
-  // 2. Hydrate complete live catalog from Firestore in background
-  async function loadProducts() {
-    try {
-      const timeout = new Promise((_, reject) => setTimeout(() => reject(new Error('Load timeout')), 3500));
-      const res = await Promise.race([getProducts(), timeout]);
-      if (Array.isArray(res) && res.length > 0) {
-        products = res;
-        renderTabs();
-        renderDropdown();
-        if (selectedProduct) updateChipUI();
-      }
-    } catch (e) {
-      console.warn('Background getProducts fetch notice (using instant catalog):', e);
-    }
-  }
-
   function normalizeCategory(cat) {
     if (!cat) return 'General';
     const c = String(cat).trim();
@@ -529,6 +508,27 @@
     }
     window.location.href = 'step3-details.html';
   };
+
+  // 1. Immediate Instant Render (0ms delay)
+  renderTabs();
+  renderDropdown();
+  if (selectedProduct) updateChipUI();
+
+  // 2. Hydrate full live catalog in background from Firestore
+  async function loadProducts() {
+    try {
+      const timeout = new Promise((_, reject) => setTimeout(() => reject(new Error('Load timeout')), 3000));
+      const res = await Promise.race([getProducts(), timeout]);
+      if (Array.isArray(res) && res.length > 0) {
+        products = res;
+        renderTabs();
+        renderDropdown();
+        if (selectedProduct) updateChipUI();
+      }
+    } catch (e) {
+      console.warn('Background getProducts fetch notice:', e);
+    }
+  }
 
   loadProducts();
 </script>
