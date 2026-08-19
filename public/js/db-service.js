@@ -999,78 +999,131 @@ export async function getCustomers() {
 // 3. PRODUCTS COLLECTION — Clean Rewrite
 // -------------------------------------------------------------
 const LOCAL_REMOVED_PRODS_KEY = 'sb_removed_products';
+const LOCAL_PRODS_CACHE_KEY = 'sb_cached_products_v2';
 
 /**
- * getProducts() — Returns the full merged product catalog.
+ * getProducts() — Returns the full merged product catalog with instant (0ms) local caching.
  * 
- * Sources (in priority order):
- *   1. DEFAULT_CATALOG_PRODUCTS — hardcoded seed data (lowest priority)
- *   2. LocalStorage products — offline-added items
- *   3. Firestore 'products' collection — cloud source of truth (highest priority)
- * 
- * Each product is keyed by its unique ID. Only explicitly deleted
- * products (tracked by doc ID or SKU in deleted_products) are filtered out.
+ * Sources:
+ *   1. LocalStorage Cache (sb_cached_products_v2) — Instant 0ms load
+ *   2. Firestore 'products' & 'deleted_products' — Background async hydration
+ *   3. DEFAULT_CATALOG_PRODUCTS — Built-in catalog seeds fallback
  */
-export async function getProducts() {
+export async function getProducts(forceRefresh = false) {
   const localList = getLocalData(LOCAL_PRODS_KEY);
   const localRemoved = getLocalData(LOCAL_REMOVED_PRODS_KEY);
-  let fsList = [];
-  const deletedIds = new Set();
+  
+  // 1. Instant Cache Layer (0ms render time)
+  const cachedStr = localStorage.getItem(LOCAL_PRODS_CACHE_KEY);
+  let cachedList = [];
+  if (cachedStr) {
+    try {
+      const parsed = JSON.parse(cachedStr);
+      if (Array.isArray(parsed) && parsed.length > 0) cachedList = parsed;
+    } catch (e) {}
+  }
+
+  // Helper to build merged product catalog
+  const buildMergedList = (fsDocs = [], deletedSet = new Set()) => {
+    const map = new Map();
+
+    // Default catalog seeds
+    DEFAULT_CATALOG_PRODUCTS.forEach(p => {
+      const idStr = String(p.id).toLowerCase();
+      if (!deletedSet.has(idStr)) map.set(p.id, { ...p });
+    });
+
+    // LocalStorage added products
+    localList.forEach(p => {
+      const id = p.id || ('loc_' + Math.random().toString(36).slice(2));
+      const idStr = String(id).toLowerCase();
+      if (!deletedSet.has(idStr)) map.set(id, { ...p, id });
+    });
+
+    // Firestore products (cloud source of truth)
+    fsDocs.forEach(d => {
+      const data = typeof d.data === 'function' ? d.data() : d;
+      const docId = d.id || data.id;
+      const idStr = String(docId).toLowerCase();
+      if (!deletedSet.has(idStr)) {
+        map.set(docId, { ...data, id: docId });
+      }
+    });
+
+    return Array.from(map.values());
+  };
+
+  // If we have cached products, return them IMMEDIATELY and update cache in background
+  if (cachedList.length > 0 && !forceRefresh) {
+    (async () => {
+      if (!db) return;
+      try {
+        const [snapResult, remSnapResult] = await Promise.all([
+          getDocs(collection(db, 'products')).catch(() => null),
+          getDocs(collection(db, 'deleted_products')).catch(() => null)
+        ]);
+
+        const fsDocs = [];
+        const deletedSet = new Set();
+        localRemoved.forEach(k => { if (k) deletedSet.add(String(k).toLowerCase()); });
+
+        if (snapResult && snapResult.forEach) {
+          snapResult.forEach(d => fsDocs.push(d));
+        }
+        if (remSnapResult && remSnapResult.forEach) {
+          remSnapResult.forEach(d => {
+            deletedSet.add(d.id.toLowerCase());
+            const data = d.data();
+            if (data.id) deletedSet.add(String(data.id).toLowerCase());
+          });
+        }
+
+        const freshList = buildMergedList(fsDocs, deletedSet);
+        if (freshList.length > 0) {
+          localStorage.setItem(LOCAL_PRODS_CACHE_KEY, JSON.stringify(freshList));
+        }
+      } catch (e) { }
+    })();
+
+    return cachedList;
+  }
+
+  // First-time load or forced refresh: fetch Firestore with 2.5s parallel timeout
+  let fsDocs = [];
+  const deletedSet = new Set();
+  localRemoved.forEach(k => { if (k) deletedSet.add(String(k).toLowerCase()); });
 
   if (db) {
     try {
-      const snapResult = await getDocs(collection(db, 'products'));
+      const withTimeout = (promise, ms = 2500) => Promise.race([
+        promise,
+        new Promise(resolve => setTimeout(() => resolve(null), ms))
+      ]);
+      const [snapResult, remSnapResult] = await Promise.all([
+        withTimeout(getDocs(collection(db, 'products')).catch(() => null)),
+        withTimeout(getDocs(collection(db, 'deleted_products')).catch(() => null))
+      ]);
+
       if (snapResult && snapResult.forEach) {
-        snapResult.forEach(d => fsList.push({ ...d.data(), id: d.id }));
+        snapResult.forEach(d => fsDocs.push(d));
       }
-    } catch (e) {
-      console.warn('Firestore products fetch notice:', e);
-    }
-    try {
-      const remSnapResult = await getDocs(collection(db, 'deleted_products'));
       if (remSnapResult && remSnapResult.forEach) {
         remSnapResult.forEach(d => {
-          deletedIds.add(d.id.toLowerCase());
+          deletedSet.add(d.id.toLowerCase());
           const data = d.data();
-          if (data.id) deletedIds.add(String(data.id).toLowerCase());
+          if (data.id) deletedSet.add(String(data.id).toLowerCase());
         });
       }
-    } catch (e) { }
+    } catch (e) {
+      console.warn('Firestore getProducts fetch notice:', e);
+    }
   }
 
-  // Also add locally-tracked removals
-  localRemoved.forEach(k => {
-    if (typeof k === 'string' && k.trim()) deletedIds.add(k.toLowerCase().trim());
-  });
-
-  // Check if a product has been deleted STRICTLY by its unique product ID
-  const isDeleted = (p) => {
-    if (!p || !p.id) return false;
-    return deletedIds.has(String(p.id).toLowerCase().trim());
-  };
-
-  // Build final product list keyed by unique product ID
-  const map = new Map();
-
-  // Layer 1: Default catalog seeds
-  DEFAULT_CATALOG_PRODUCTS.forEach(p => {
-    if (!isDeleted(p)) map.set(p.id, { ...p });
-  });
-
-  // Layer 2: LocalStorage products
-  localList.forEach(p => {
-    if (!isDeleted(p)) {
-      const id = p.id || ('loc_' + Math.random().toString(36).slice(2));
-      map.set(id, { ...p, id });
-    }
-  });
-
-  // Layer 3: Firestore products (keyed by Firestore doc ID — always unique)
-  fsList.forEach(p => {
-    if (!isDeleted(p)) map.set(p.id, { ...p });
-  });
-
-  return Array.from(map.values());
+  const finalMerged = buildMergedList(fsDocs, deletedSet);
+  if (finalMerged.length > 0) {
+    try { localStorage.setItem(LOCAL_PRODS_CACHE_KEY, JSON.stringify(finalMerged)); } catch(e){}
+  }
+  return finalMerged;
 }
 
 // Helper: Compress image data URL to max 400x400
