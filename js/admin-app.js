@@ -59,6 +59,7 @@ window.handleLoginSubmit = async (e) => {
     const session = await loginAdmin(email, pass);
     showToast(`Welcome back, ${session.name || 'Admin'}!`, 'success');
     initAdminUI(session);
+    await refreshCurrentView();
   } catch (err) {
     if (errEl) {
       errEl.textContent = err.message || 'Invalid Credentials';
