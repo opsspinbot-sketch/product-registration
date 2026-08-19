@@ -942,7 +942,6 @@ export async function getProducts() {
   const localRemoved = getLocalData(LOCAL_REMOVED_PRODS_KEY);
   let fsList = [];
   const deletedIds = new Set();
-  const deletedSkus = new Set();
 
   if (db) {
     try {
@@ -955,31 +954,22 @@ export async function getProducts() {
     try {
       const remSnap = await getDocs(collection(db, 'deleted_products'));
       remSnap.forEach(d => {
-        const data = d.data();
         deletedIds.add(d.id.toLowerCase());
+        const data = d.data();
         if (data.id) deletedIds.add(String(data.id).toLowerCase());
-        if (data.sku) deletedSkus.add(String(data.sku).toLowerCase());
-        if (Array.isArray(data.keys)) {
-          data.keys.forEach(k => {
-            const kLower = String(k).toLowerCase().trim();
-            if (kLower) deletedIds.add(kLower);
-          });
-        }
       });
     } catch (e) { }
   }
 
   // Also add locally-tracked removals
   localRemoved.forEach(k => {
-    if (typeof k === 'string') deletedIds.add(k.toLowerCase().trim());
+    if (typeof k === 'string' && k.trim()) deletedIds.add(k.toLowerCase().trim());
   });
 
-  // Check if a product has been deleted (by ID or SKU only — NOT by name)
+  // Check if a product has been deleted STRICTLY by its unique product ID
   const isDeleted = (p) => {
-    if (!p) return true;
-    const id = (p.id || '').toLowerCase().trim();
-    const sku = (p.sku || '').toLowerCase().trim();
-    return (id && deletedIds.has(id)) || (sku && deletedSkus.has(sku));
+    if (!p || !p.id) return false;
+    return deletedIds.has(String(p.id).toLowerCase().trim());
   };
 
   // Build final product list keyed by unique product ID
@@ -1098,33 +1088,28 @@ export async function updateProduct(id, pData) {
 }
 
 /**
- * deleteProduct() — Deletes a product from catalog.
+ * deleteProduct() — Deletes a product from catalog strictly by document ID.
  */
 export async function deleteProduct(id, pObj = null) {
   try {
     const cleanId = String(id).trim();
-    const sku = pObj ? String(pObj.sku || '').trim() : '';
-    console.log('[deleteProduct] Deleting:', cleanId, 'SKU:', sku);
 
     // 1. Remove from local storage
     const localList = getLocalData(LOCAL_PRODS_KEY).filter(p => p.id !== cleanId);
     localStorage.setItem(LOCAL_PRODS_KEY, JSON.stringify(localList));
 
-    // 2. Track in local removed list (ID and SKU only)
+    // 2. Track in local removed list (ID only)
     saveLocalData(LOCAL_REMOVED_PRODS_KEY, cleanId.toLowerCase());
-    if (sku) saveLocalData(LOCAL_REMOVED_PRODS_KEY, sku.toLowerCase());
 
     // 3. Sync deletion to Firestore (with timeout so UI never hangs)
     if (db) {
       const safeDocId = cleanId.replace(/[\/\.#$\[\]]/g, '_');
       const deletionRecord = { id: cleanId, deletedAt: new Date().toISOString() };
-      if (sku) deletionRecord.sku = sku.toLowerCase();
 
       try {
         const setPromise = setDoc(doc(db, 'deleted_products', safeDocId), deletionRecord, { merge: true });
         const timeout = new Promise((_, reject) => setTimeout(() => reject(new Error('Firestore timeout')), 3000));
         await Promise.race([setPromise, timeout]);
-        console.log('[deleteProduct] Firestore deleted_products record created:', safeDocId);
       } catch (e) {
         console.warn('[deleteProduct] Firestore deleted_products sync skipped:', e.message);
       }
@@ -1135,13 +1120,11 @@ export async function deleteProduct(id, pObj = null) {
           const delPromise = deleteDoc(doc(db, 'products', cleanId));
           const timeout2 = new Promise((_, reject) => setTimeout(() => reject(new Error('Firestore timeout')), 3000));
           await Promise.race([delPromise, timeout2]);
-          console.log('[deleteProduct] Firestore product document deleted:', cleanId);
         } catch (e) {
           console.warn('[deleteProduct] Firestore product delete skipped:', e.message);
         }
       }
     }
-    console.log('[deleteProduct] Done:', cleanId);
   } catch(e) {
     console.warn('[deleteProduct] Error:', e);
   }
