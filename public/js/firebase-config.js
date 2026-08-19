@@ -1,13 +1,13 @@
 // Firebase Modular SDK Initialization (Fault-Tolerant & Bulletproof)
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+import { getFirestore } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+import { getAuth } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
+
 let app = null;
 let db = null;
 let auth = null;
 
 try {
-  const { initializeApp } = await import("https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js");
-  const { getFirestore } = await import("https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js");
-  const { getAuth } = await import("https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js");
-
   const firebaseConfig = {
     apiKey: window.__FIREBASE_API_KEY__ || "AIzaSyBL8RJ_pabY71EtNq0HjeNWLtUNE6XoPFQ",
     authDomain: window.__FIREBASE_AUTH_DOMAIN__ || "invoice-af966.firebaseapp.com",

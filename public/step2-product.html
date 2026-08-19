@@ -346,20 +346,22 @@
 </div>
 
 <script type="module">
-  import { getProducts, DEFAULT_CATALOG_PRODUCTS } from './js/db-service.js?v=34.0.0';
+  import { getProducts, DEFAULT_CATALOG_PRODUCTS } from './js/db-service.js?v=35.0.0';
 
-  // Fallback if db-service import fails or returns nothing
-  const FALLBACK_PRODUCTS = DEFAULT_CATALOG_PRODUCTS || [
-    { id: "prod_seed_1", name: "SpinBot IceDot Mag v1 Mobile Cooler", sku: "SB-ICEDOT-MAG1", brand: "SpinBot", warrantyPeriod: "12 Months", status: "Active", category: "Coolers" },
-    { id: "prod_seed_2", name: "SpinBot BattleMods Apex Gaming Trigger", sku: "SB-BM-APEX", brand: "SpinBot", warrantyPeriod: "6 Months", status: "Active", category: "Gaming Triggers" },
-    { id: "prod_seed_3", name: "SpinBot BattleBudz C10 Type-C Earphone", sku: "SB-BB-C10", brand: "SpinBot", warrantyPeriod: "12 Months", status: "Active", category: "Earphones & Headphones" },
-    { id: "prod_seed_4", name: "SpinBot Airflow X10 Laptop Cooling Pad", sku: "SB-AF-X10", brand: "SpinBot", warrantyPeriod: "12 Months", status: "Active", category: "Laptop Cooling" },
-    { id: "prod_seed_5", name: "SpinBot Rage MK87 Mechanical Keyboard", sku: "SB-MK87", brand: "SpinBot", warrantyPeriod: "24 Months", status: "Active", category: "Keyboards" },
-    { id: "prod_seed_6", name: "SpinBot HX500 Gaming Headset", sku: "SB-HX500", brand: "SpinBot", warrantyPeriod: "12 Months", status: "Active", category: "Earphones & Headphones" }
-  ];
+  // Seed default catalog products immediately so UI is 100% instant (0ms delay)
+  const SEED_PRODUCTS = (Array.isArray(DEFAULT_CATALOG_PRODUCTS) && DEFAULT_CATALOG_PRODUCTS.length > 0) 
+    ? DEFAULT_CATALOG_PRODUCTS 
+    : [
+        { id: "prod_1", name: "SpinBot IceDot Mag v1 Mobile Cooler", sku: "SB-ICEDOT-MAG1", brand: "SpinBot", warrantyPeriod: "12 Months", status: "Active", category: "Coolers" },
+        { id: "prod_2", name: "SpinBot BattleMods Apex Gaming Trigger", sku: "SB-BM-APEX", brand: "SpinBot", warrantyPeriod: "6 Months", status: "Active", category: "Gaming Triggers" },
+        { id: "prod_3", name: "SpinBot BattleBudz C10 Type-C Earphone", sku: "SB-BB-C10", brand: "SpinBot", warrantyPeriod: "12 Months", status: "Active", category: "Earphones & Headphones" },
+        { id: "prod_4", name: "SpinBot Airflow X10 Laptop Cooling Pad", sku: "SB-AF-X10", brand: "SpinBot", warrantyPeriod: "12 Months", status: "Active", category: "Laptop Cooling" },
+        { id: "prod_5", name: "SpinBot Rage MK87 Mechanical Keyboard", sku: "SB-MK87", brand: "SpinBot", warrantyPeriod: "24 Months", status: "Active", category: "Keyboards" },
+        { id: "prod_6", name: "SpinBot HX500 Gaming Headset", sku: "SB-HX500", brand: "SpinBot", warrantyPeriod: "12 Months", status: "Active", category: "Earphones & Headphones" }
+      ];
 
-  let products = [];
-  let isLoadingProducts = true;
+  let products = [...SEED_PRODUCTS];
+  let isLoadingProducts = false; // False so products render INSTANTLY!
   let selectedProduct = null;
   let activeCategory = 'All';
   let searchQuery = '';
@@ -372,27 +374,24 @@
     selectedProduct = { name: savedName, sku: 'N/A', warrantyPeriod: '12 Months' };
   }
 
+  // 1. Render default catalog INSTANTLY (0ms delay)
+  renderTabs();
+  renderDropdown();
+  if (selectedProduct) updateChipUI();
+
+  // 2. Hydrate complete live catalog from Firestore in background
   async function loadProducts() {
-    isLoadingProducts = true;
-    renderDropdown();
     try {
-      // Race getProducts() against a 5s timeout so UI never hangs
-      const timeout = new Promise((_, reject) => setTimeout(() => reject(new Error('Load timeout')), 5000));
+      const timeout = new Promise((_, reject) => setTimeout(() => reject(new Error('Load timeout')), 3500));
       const res = await Promise.race([getProducts(), timeout]);
       if (Array.isArray(res) && res.length > 0) {
         products = res;
-      } else {
-        console.warn('getProducts returned empty, using fallback');
-        products = FALLBACK_PRODUCTS;
+        renderTabs();
+        renderDropdown();
+        if (selectedProduct) updateChipUI();
       }
     } catch (e) {
-      console.warn('Error loading products, using fallback:', e);
-      products = FALLBACK_PRODUCTS;
-    } finally {
-      isLoadingProducts = false;
-      renderTabs();
-      renderDropdown();
-      if (selectedProduct) updateChipUI();
+      console.warn('Background getProducts fetch notice (using instant catalog):', e);
     }
   }
 

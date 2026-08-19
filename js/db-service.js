@@ -1,27 +1,8 @@
 // Firestore & Pure Real-Time Data Services (Fault-Tolerant)
 import { db, RESEND_API_KEY } from './firebase-config.js?v=16.0.0';
-
-let collection, doc, getDocs, getDoc, addDoc, updateDoc, deleteDoc, setDoc, query, where, orderBy, limit, serverTimestamp, onSnapshot;
-
-try {
-  const fsSdk = await import("https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js");
-  collection = fsSdk.collection;
-  doc = fsSdk.doc;
-  getDocs = fsSdk.getDocs;
-  getDoc = fsSdk.getDoc;
-  addDoc = fsSdk.addDoc;
-  updateDoc = fsSdk.updateDoc;
-  deleteDoc = fsSdk.deleteDoc;
-  setDoc = fsSdk.setDoc;
-  query = fsSdk.query;
-  where = fsSdk.where;
-  orderBy = fsSdk.orderBy;
-  limit = fsSdk.limit;
-  serverTimestamp = fsSdk.serverTimestamp;
-  onSnapshot = fsSdk.onSnapshot;
-} catch (e) {
-  console.warn("Firestore CDN unreachable — running local data mode:", e);
-}
+import { 
+  collection, doc, getDocs, getDoc, addDoc, updateDoc, deleteDoc, setDoc, query, where, orderBy, limit, serverTimestamp, onSnapshot 
+} from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
 // Helper: LocalStorage Backup Keys
 const LOCAL_REGS_KEY = 'sb_local_registrations';
@@ -945,20 +926,29 @@ export async function getProducts() {
 
   if (db) {
     try {
-      const snap = await getDocs(collection(db, 'products'));
-      snap.forEach(d => fsList.push({ id: d.id, ...d.data() }));
+      const timeout = new Promise((_, reject) => setTimeout(() => reject(new Error('Firestore getProducts timeout')), 2500));
+      
+      const prodsPromise = getDocs(collection(db, 'products')).catch(() => null);
+      const delPromise = getDocs(collection(db, 'deleted_products')).catch(() => null);
+
+      const [snapResult, remSnapResult] = await Promise.race([
+        Promise.all([prodsPromise, delPromise]),
+        timeout
+      ]).catch(() => [null, null]);
+
+      if (snapResult && snapResult.forEach) {
+        snapResult.forEach(d => fsList.push({ id: d.id, ...d.data() }));
+      }
+      if (remSnapResult && remSnapResult.forEach) {
+        remSnapResult.forEach(d => {
+          deletedIds.add(d.id.toLowerCase());
+          const data = d.data();
+          if (data.id) deletedIds.add(String(data.id).toLowerCase());
+        });
+      }
     } catch (e) {
       console.warn('Firestore getProducts read failed:', e);
     }
-
-    try {
-      const remSnap = await getDocs(collection(db, 'deleted_products'));
-      remSnap.forEach(d => {
-        deletedIds.add(d.id.toLowerCase());
-        const data = d.data();
-        if (data.id) deletedIds.add(String(data.id).toLowerCase());
-      });
-    } catch (e) { }
   }
 
   // Also add locally-tracked removals
