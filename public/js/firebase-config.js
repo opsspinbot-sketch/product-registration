@@ -18,7 +18,13 @@ try {
   };
 
   app = initializeApp(firebaseConfig);
-  db = getFirestore(app);
+  try {
+    db = initializeFirestore(app, {
+      experimentalForceLongPolling: true
+    });
+  } catch (err) {
+    db = getFirestore(app);
+  }
   auth = getAuth(app);
 } catch (e) {
   console.warn("Firebase CDN unreachable — running local fallback mode:", e);
