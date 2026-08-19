@@ -14,59 +14,70 @@ const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
 
 const DEFAULT_CATALOG_PRODUCTS = [
-  { id: "prod_seed_1", name: "SpinBot IceDot Mag v1 Mobile Cooler", sku: "SB-ICEDOT-MAG1", brand: "SpinBot", warrantyPeriod: "12 Months", status: "Active", category: "Coolers" },
-  { id: "prod_seed_2", name: "SpinBot BattleMods Apex Gaming Trigger", sku: "SB-BM-APEX", brand: "SpinBot", warrantyPeriod: "6 Months", status: "Active", category: "Gaming Triggers" },
-  { id: "prod_seed_3", name: "SpinBot BattleBudz C10 Type-C Earphone", sku: "SB-BB-C10", brand: "SpinBot", warrantyPeriod: "12 Months", status: "Active", category: "Earphones & Headphones" },
-  { id: "prod_seed_4", name: "SpinBot Airflow X10 Laptop Cooling Pad", sku: "SB-AF-X10", brand: "SpinBot", warrantyPeriod: "12 Months", status: "Active", category: "Laptop Cooling" },
-  { id: "prod_seed_5", name: "SpinBot Rage MK87 Mechanical Keyboard", sku: "SB-MK87", brand: "SpinBot", warrantyPeriod: "24 Months", status: "Active", category: "Keyboards" },
-  { id: "prod_seed_6", name: "SpinBot HX500 Gaming Headset", sku: "SB-HX500", brand: "SpinBot", warrantyPeriod: "12 Months", status: "Active", category: "Earphones & Headphones" }
+  { id: "prod_1", name: "SpinBot IceDot Mag v1 Mobile Cooler", sku: "SB-ICEDOT-MAG1" },
+  { id: "prod_2", name: "SpinBot BattleMods Apex Gaming Trigger", sku: "SB-BM-APEX" },
+  { id: "prod_3", name: "SpinBot BattleBudz C10 Type-C Earphone", sku: "SB-BB-C10" },
+  { id: "prod_4", name: "SpinBot Airflow X10 Laptop Cooling Pad", sku: "SB-AF-X10" },
+  { id: "prod_5", name: "SpinBot Rage MK87 Mechanical Keyboard", sku: "SB-MK87" },
+  { id: "prod_6", name: "SpinBot HX500 Gaming Headset", sku: "SB-HX500" }
 ];
 
-async function testGetProducts() {
+async function testNewLogic() {
   let fsList = [];
-  let fsRemoved = [];
+  const deletedIds = new Set();
+  const deletedSkus = new Set();
 
   const snap = await getDocs(collection(db, 'products'));
   snap.forEach(d => fsList.push({ id: d.id, ...d.data() }));
+  console.log(`Firestore products: ${snap.size}`);
 
   const remSnap = await getDocs(collection(db, 'deleted_products'));
   remSnap.forEach(d => {
     const data = d.data();
-    fsRemoved.push(d.id);
-    if (data.id) fsRemoved.push(data.id);
-    if (Array.isArray(data.keys)) fsRemoved.push(...data.keys);
+    deletedIds.add(d.id.toLowerCase());
+    if (data.id) deletedIds.add(String(data.id).toLowerCase());
+    if (data.sku) deletedSkus.add(String(data.sku).toLowerCase());
+    if (Array.isArray(data.keys)) {
+      data.keys.forEach(k => {
+        const kLower = String(k).toLowerCase().trim();
+        if (kLower) deletedIds.add(kLower);
+      });
+    }
   });
+  console.log(`Deleted IDs: ${deletedIds.size}, Deleted SKUs: ${deletedSkus.size}`);
 
-  const removedList = [...new Set(fsRemoved)].map(k => String(k).toLowerCase().trim());
-  const map = new Map();
-
-  const isRemoved = (p) => {
-    if (!p) return false;
-    const k1 = (p.id || '').toLowerCase().trim();
-    const k2 = (p.sku || '').toLowerCase().trim();
-    const k3 = (p.name || '').toLowerCase().trim();
-    return (k1 && removedList.includes(k1)) || (k2 && removedList.includes(k2)) || (k3 && removedList.includes(k3));
+  const isDeleted = (p) => {
+    if (!p) return true;
+    const id = (p.id || '').toLowerCase().trim();
+    const sku = (p.sku || '').toLowerCase().trim();
+    return (id && deletedIds.has(id)) || (sku && deletedSkus.has(sku));
   };
 
+  const map = new Map();
+
   DEFAULT_CATALOG_PRODUCTS.forEach(p => {
-    const key = (p.id || p.sku || p.name).toLowerCase().trim();
-    if (!isRemoved(p)) {
-      map.set(key, p);
-    }
+    if (!isDeleted(p)) map.set(p.id, { ...p });
   });
 
   fsList.forEach(p => {
-    const key = (p.id || p.sku || p.name).toLowerCase().trim();
-    if (!isRemoved(p)) {
-      map.set(key, { id: p.id, ...p });
-    }
+    if (!isDeleted(p)) map.set(p.id, { ...p });
   });
 
-  const finalProducts = Array.from(map.values());
-  console.log(`Total unique products with ID keying: ${finalProducts.length}`);
+  const final = Array.from(map.values());
+  console.log(`\n=== FINAL PRODUCT COUNT: ${final.length} ===`);
+  final.forEach((p, i) => {
+    console.log(`${i + 1}. [${p.id}] ${p.name} (SKU: ${p.sku || 'N/A'})`);
+  });
+
+  // Check for any products that were incorrectly filtered
+  const fsNotShown = fsList.filter(p => !map.has(p.id));
+  if (fsNotShown.length > 0) {
+    console.log(`\n⚠️ ${fsNotShown.length} Firestore products filtered out:`);
+    fsNotShown.forEach(p => console.log(`  - [${p.id}] ${p.name} (deleted: ${isDeleted(p)})`));
+  }
 }
 
-testGetProducts().then(() => process.exit(0)).catch(err => {
+testNewLogic().then(() => process.exit(0)).catch(err => {
   console.error(err);
   process.exit(1);
 });

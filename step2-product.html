@@ -346,9 +346,10 @@
 </div>
 
 <script type="module">
-  import { getProducts } from './js/db-service.js?v=33.0.0';
+  import { getProducts, DEFAULT_CATALOG_PRODUCTS } from './js/db-service.js?v=34.0.0';
 
-  const FALLBACK_PRODUCTS = [
+  // Fallback if db-service import fails or returns nothing
+  const FALLBACK_PRODUCTS = DEFAULT_CATALOG_PRODUCTS || [
     { id: "prod_seed_1", name: "SpinBot IceDot Mag v1 Mobile Cooler", sku: "SB-ICEDOT-MAG1", brand: "SpinBot", warrantyPeriod: "12 Months", status: "Active", category: "Coolers" },
     { id: "prod_seed_2", name: "SpinBot BattleMods Apex Gaming Trigger", sku: "SB-BM-APEX", brand: "SpinBot", warrantyPeriod: "6 Months", status: "Active", category: "Gaming Triggers" },
     { id: "prod_seed_3", name: "SpinBot BattleBudz C10 Type-C Earphone", sku: "SB-BB-C10", brand: "SpinBot", warrantyPeriod: "12 Months", status: "Active", category: "Earphones & Headphones" },
@@ -375,12 +376,18 @@
     isLoadingProducts = true;
     renderDropdown();
     try {
-      const res = await getProducts();
-      if (Array.isArray(res)) {
+      // Race getProducts() against a 5s timeout so UI never hangs
+      const timeout = new Promise((_, reject) => setTimeout(() => reject(new Error('Load timeout')), 5000));
+      const res = await Promise.race([getProducts(), timeout]);
+      if (Array.isArray(res) && res.length > 0) {
         products = res;
+      } else {
+        console.warn('getProducts returned empty, using fallback');
+        products = FALLBACK_PRODUCTS;
       }
     } catch (e) {
-      console.warn('Error loading products:', e);
+      console.warn('Error loading products, using fallback:', e);
+      products = FALLBACK_PRODUCTS;
     } finally {
       isLoadingProducts = false;
       renderTabs();

@@ -922,72 +922,91 @@ export async function getCustomers() {
 }
 
 // -------------------------------------------------------------
-// 3. PRODUCTS COLLECTION
+// 3. PRODUCTS COLLECTION — Clean Rewrite
 // -------------------------------------------------------------
 const LOCAL_REMOVED_PRODS_KEY = 'sb_removed_products';
 
+/**
+ * getProducts() — Returns the full merged product catalog.
+ * 
+ * Sources (in priority order):
+ *   1. DEFAULT_CATALOG_PRODUCTS — hardcoded seed data (lowest priority)
+ *   2. LocalStorage products — offline-added items
+ *   3. Firestore 'products' collection — cloud source of truth (highest priority)
+ * 
+ * Each product is keyed by its unique ID. Only explicitly deleted
+ * products (tracked by doc ID or SKU in deleted_products) are filtered out.
+ */
 export async function getProducts() {
   const localList = getLocalData(LOCAL_PRODS_KEY);
   const localRemoved = getLocalData(LOCAL_REMOVED_PRODS_KEY);
   let fsList = [];
-  let fsRemoved = [];
+  const deletedIds = new Set();
+  const deletedSkus = new Set();
 
   if (db) {
     try {
       const snap = await getDocs(collection(db, 'products'));
       snap.forEach(d => fsList.push({ id: d.id, ...d.data() }));
-    } catch (e) { }
+    } catch (e) {
+      console.warn('Firestore getProducts read failed:', e);
+    }
 
     try {
       const remSnap = await getDocs(collection(db, 'deleted_products'));
       remSnap.forEach(d => {
         const data = d.data();
-        fsRemoved.push(d.id);
-        if (data.id) fsRemoved.push(data.id);
-        if (Array.isArray(data.keys)) fsRemoved.push(...data.keys);
+        deletedIds.add(d.id.toLowerCase());
+        if (data.id) deletedIds.add(String(data.id).toLowerCase());
+        if (data.sku) deletedSkus.add(String(data.sku).toLowerCase());
+        if (Array.isArray(data.keys)) {
+          data.keys.forEach(k => {
+            const kLower = String(k).toLowerCase().trim();
+            if (kLower) deletedIds.add(kLower);
+          });
+        }
       });
     } catch (e) { }
   }
 
-  const removedList = [...new Set([...localRemoved, ...fsRemoved])].map(k => String(k).toLowerCase().trim());
-  const map = new Map();
+  // Also add locally-tracked removals
+  localRemoved.forEach(k => {
+    if (typeof k === 'string') deletedIds.add(k.toLowerCase().trim());
+  });
 
-  const isRemoved = (p) => {
-    if (!p) return false;
-    const k1 = (p.id || '').toLowerCase().trim();
-    const k2 = (p.sku || '').toLowerCase().trim();
-    const k3 = (p.name || '').toLowerCase().trim();
-    return (k1 && removedList.includes(k1)) || (k2 && removedList.includes(k2)) || (k3 && removedList.includes(k3));
+  // Check if a product has been deleted (by ID or SKU only — NOT by name)
+  const isDeleted = (p) => {
+    if (!p) return true;
+    const id = (p.id || '').toLowerCase().trim();
+    const sku = (p.sku || '').toLowerCase().trim();
+    return (id && deletedIds.has(id)) || (sku && deletedSkus.has(sku));
   };
 
-  // 1. Add Default Catalog Products (unless blacklisted/deleted by admin)
+  // Build final product list keyed by unique product ID
+  const map = new Map();
+
+  // Layer 1: Default catalog seeds
   DEFAULT_CATALOG_PRODUCTS.forEach(p => {
-    const key = (p.id || p.sku || p.name).toLowerCase().trim();
-    if (!isRemoved(p)) {
-      map.set(key, p);
-    }
+    if (!isDeleted(p)) map.set(p.id, { ...p });
   });
 
-  // 2. Add LocalStorage items if not removed
+  // Layer 2: LocalStorage products
   localList.forEach(p => {
-    const key = (p.id || p.sku || p.name).toLowerCase().trim();
-    if (!isRemoved(p)) {
-      map.set(key, { id: p.id || 'loc_' + Math.random(), ...p });
+    if (!isDeleted(p)) {
+      const id = p.id || ('loc_' + Math.random().toString(36).slice(2));
+      map.set(id, { ...p, id });
     }
   });
 
-  // 3. Add Firestore items (keyed by unique doc ID so all products show without overwrites)
+  // Layer 3: Firestore products (keyed by Firestore doc ID — always unique)
   fsList.forEach(p => {
-    const key = (p.id || (p.sku ? p.sku + '_' + p.name : p.name)).toLowerCase().trim();
-    if (!isRemoved(p)) {
-      map.set(key, { id: p.id, ...p });
-    }
+    if (!isDeleted(p)) map.set(p.id, { ...p });
   });
 
   return Array.from(map.values());
 }
 
-// Helper: Compress image data URL to max 400x400 to prevent oversized base64 strings
+// Helper: Compress image data URL to max 400x400
 export function compressImageDataUrl(dataUrl, maxWidth = 400, maxHeight = 400, quality = 0.8) {
   return new Promise((resolve) => {
     if (!dataUrl || typeof dataUrl !== 'string' || !dataUrl.startsWith('data:image')) {
@@ -1019,93 +1038,98 @@ export function compressImageDataUrl(dataUrl, maxWidth = 400, maxHeight = 400, q
   });
 }
 
+/**
+ * addProduct() — Adds a product to catalog.
+ * Saves to localStorage first, then syncs to Firestore with 3s timeout.
+ */
 export async function addProduct(pData) {
-  const cleanId = 'prod_' + Date.now();
-  
-  // Compress image to small base64 JPEG if it's a data URL
-  if (pData.image && pData.image.startsWith('data:image')) {
-    try { pData.image = await compressImageDataUrl(pData.image, 400, 400, 0.8); } catch(e) {}
+  if (pData.image && typeof pData.image === 'string' && pData.image.startsWith('data:image')) {
+    try { pData.image = await compressImageDataUrl(pData.image, 400, 400, 0.7); } catch(e) {}
   }
 
-  let created = { id: cleanId, ...pData };
-  saveLocalData(LOCAL_PRODS_KEY, created);
+  const localId = 'prod_' + Date.now();
+  let product = { id: localId, ...pData };
+  saveLocalData(LOCAL_PRODS_KEY, product);
 
   if (db) {
     try {
       const fsPromise = addDoc(collection(db, 'products'), { ...pData, createdAt: new Date().toISOString() });
-      const timeoutPromise = new Promise((_, reject) => setTimeout(() => reject(new Error('Firestore Sync Timeout')), 2500));
-      const docRef = await Promise.race([fsPromise, timeoutPromise]);
-      created = { id: docRef.id, ...pData };
-      saveLocalData(LOCAL_PRODS_KEY, created);
+      const timeout = new Promise((_, reject) => setTimeout(() => reject(new Error('Firestore timeout')), 3000));
+      const docRef = await Promise.race([fsPromise, timeout]);
+      product = { id: docRef.id, ...pData };
+      // Update localStorage entry to use real Firestore ID
+      try {
+        const list = getLocalData(LOCAL_PRODS_KEY);
+        const updated = list.map(p => p.id === localId ? { ...p, id: docRef.id } : p);
+        localStorage.setItem(LOCAL_PRODS_KEY, JSON.stringify(updated));
+      } catch(e) {}
     } catch (e) {
-      console.warn('Firestore addProduct notice (saved locally):', e);
+      console.warn('addProduct: Firestore sync skipped (saved locally):', e.message);
     }
   }
-  return created;
+  return product;
 }
 
+/**
+ * updateProduct() — Updates an existing product.
+ */
 export async function updateProduct(id, pData) {
-  if (pData.image && pData.image.startsWith('data:image')) {
-    try { pData.image = await compressImageDataUrl(pData.image, 400, 400, 0.8); } catch(e) {}
+  if (pData.image && typeof pData.image === 'string' && pData.image.startsWith('data:image')) {
+    try { pData.image = await compressImageDataUrl(pData.image, 400, 400, 0.7); } catch(e) {}
   }
 
-  // Update local storage item if present
+  // Update in localStorage
   try {
-    const localList = getLocalData(LOCAL_PRODS_KEY);
-    const updatedLocal = localList.map(p => (p.id === id || p.sku === id || p.name === id) ? { ...p, ...pData } : p);
-    localStorage.setItem(LOCAL_PRODS_KEY, JSON.stringify(updatedLocal));
+    const list = getLocalData(LOCAL_PRODS_KEY);
+    const updated = list.map(p => p.id === id ? { ...p, ...pData } : p);
+    localStorage.setItem(LOCAL_PRODS_KEY, JSON.stringify(updated));
   } catch(e) {}
 
-  if (db && !id.startsWith('prod_') && !id.startsWith('loc_')) { 
+  // Sync to Firestore (only for real Firestore doc IDs)
+  if (db && id && !id.startsWith('prod_') && !id.startsWith('loc_')) {
     try {
       const fsPromise = updateDoc(doc(db, 'products', id), pData);
-      const timeoutPromise = new Promise((_, reject) => setTimeout(() => reject(new Error('Firestore Sync Timeout')), 2500));
-      await Promise.race([fsPromise, timeoutPromise]);
+      const timeout = new Promise((_, reject) => setTimeout(() => reject(new Error('Firestore timeout')), 3000));
+      await Promise.race([fsPromise, timeout]);
     } catch (e) {
-      console.warn('Firestore updateProduct notice (updated locally):', e);
-    } 
+      console.warn('updateProduct: Firestore sync skipped:', e.message);
+    }
   }
 }
 
+/**
+ * deleteProduct() — Deletes a product from catalog.
+ */
 export async function deleteProduct(id, pObj = null) {
   try {
     const cleanId = String(id).trim();
-    const keysToRemove = [cleanId, cleanId.toLowerCase()];
-    if (pObj) {
-      if (pObj.id) keysToRemove.push(pObj.id, String(pObj.id).toLowerCase().trim());
-      if (pObj.sku) keysToRemove.push(pObj.sku, String(pObj.sku).toLowerCase().trim());
-      if (pObj.name) keysToRemove.push(pObj.name, String(pObj.name).toLowerCase().trim());
-    }
+    const sku = pObj ? String(pObj.sku || '').trim() : '';
 
-    // 1. Remove from local storage array
-    const localList = getLocalData(LOCAL_PRODS_KEY).filter(p => {
-      const pKey = (p.sku || p.name || p.id || '').toLowerCase().trim();
-      return !keysToRemove.includes(p.id) && !keysToRemove.includes(p.sku) && !keysToRemove.includes(p.name) && !keysToRemove.includes(pKey);
-    });
+    // 1. Remove from local storage
+    const localList = getLocalData(LOCAL_PRODS_KEY).filter(p => p.id !== cleanId);
     localStorage.setItem(LOCAL_PRODS_KEY, JSON.stringify(localList));
 
-    // 2. Track in removed products list so item is blacklisted everywhere
-    keysToRemove.forEach(k => {
-      if (k) saveLocalData(LOCAL_REMOVED_PRODS_KEY, String(k).toLowerCase().trim());
-    });
+    // 2. Track in local removed list (ID and SKU only)
+    saveLocalData(LOCAL_REMOVED_PRODS_KEY, cleanId.toLowerCase());
+    if (sku) saveLocalData(LOCAL_REMOVED_PRODS_KEY, sku.toLowerCase());
 
-    // 3. Sync deletion to Firestore so all clients get the deletion
+    // 3. Sync deletion to Firestore
     if (db) {
       try {
-        const { doc: dDoc, setDoc: sDoc, deleteDoc: delDoc } = await import("https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js");
         const safeDocId = cleanId.replace(/[\/\.#$\[\]]/g, '_');
-        await sDoc(dDoc(db, 'deleted_products', safeDocId), {
-          id: cleanId,
-          keys: keysToRemove.map(k => String(k).toLowerCase().trim()),
-          deletedAt: new Date().toISOString()
-        }, { merge: true }).catch(() => {});
-
-        if (!cleanId.startsWith('loc_')) {
-          await delDoc(dDoc(db, 'products', cleanId)).catch(() => {});
+        const deletionRecord = { id: cleanId, deletedAt: new Date().toISOString() };
+        if (sku) deletionRecord.sku = sku.toLowerCase();
+        await setDoc(doc(db, 'deleted_products', safeDocId), deletionRecord, { merge: true }).catch(() => {});
+        if (!cleanId.startsWith('prod_') && !cleanId.startsWith('loc_')) {
+          await deleteDoc(doc(db, 'products', cleanId)).catch(() => {});
         }
-      } catch (e) { }
+      } catch (e) {
+        console.warn('deleteProduct: Firestore sync error:', e.message);
+      }
     }
-  } catch(e) {}
+  } catch(e) {
+    console.warn('deleteProduct error:', e);
+  }
 }
 
 // -------------------------------------------------------------
