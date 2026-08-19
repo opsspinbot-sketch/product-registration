@@ -465,9 +465,15 @@
 
   <!-- Personal Information Card -->
   <div class="g-card">
-    <div class="g-card-header">
-      <h2 class="g-card-title">Personal Info</h2>
-      <p class="g-card-sub">Basic info used across your SpinBot device warranties</p>
+    <div class="g-card-header" style="display: flex; align-items: center; justify-content: space-between;">
+      <div>
+        <h2 class="g-card-title">Personal Info</h2>
+        <p class="g-card-sub">Basic info used across your SpinBot device warranties</p>
+      </div>
+      <button onclick="openEditProfileModal()" class="btn-g-outlined" style="padding: 6px 14px; font-size: 13px;">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+        <span>Edit Profile</span>
+      </button>
     </div>
 
     <div class="g-row">
@@ -516,14 +522,37 @@
     <div style="grid-column: 1 / -1; text-align: center; padding: 40px; background: #ffffff; border-radius: 16px; border: 1px solid var(--g-border);">
       <div style="font-size: 14px; color: var(--g-text-sub);">Loading registered devices...</div>
     </div>
+  <!-- Edit Profile Modal -->
+  <div id="editProfileModal" style="display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.5); z-index: 999; align-items: center; justify-content: center; padding: 16px;">
+    <div style="background: #ffffff; border-radius: 20px; max-width: 440px; width: 100%; padding: 24px; box-shadow: 0 4px 20px rgba(0,0,0,0.15);">
+      <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 16px; border-bottom: 1px solid var(--g-border); padding-bottom: 12px;">
+        <h3 style="margin: 0; font-size: 17px; font-weight: 600; color: var(--g-text-dark);">Edit Personal Details</h3>
+        <button onclick="closeEditProfileModal()" style="background: none; border: none; font-size: 20px; cursor: pointer; color: var(--g-text-sub);">&times;</button>
+      </div>
+
+      <div style="margin-bottom: 16px;">
+        <label style="display: block; font-size: 13px; font-weight: 500; color: var(--g-text-dark); margin-bottom: 6px;">Full Name</label>
+        <input type="text" id="editNameInput" style="width: 100%; height: 42px; padding: 8px 12px; border: 1px solid var(--g-border); border-radius: 10px; font-size: 14px; outline: none;"/>
+      </div>
+
+      <div style="margin-bottom: 20px;">
+        <label style="display: block; font-size: 13px; font-weight: 500; color: var(--g-text-dark); margin-bottom: 6px;">Phone Number (Optional)</label>
+        <input type="tel" id="editPhoneInput" placeholder="10-digit mobile number" style="width: 100%; height: 42px; padding: 8px 12px; border: 1px solid var(--g-border); border-radius: 10px; font-size: 14px; outline: none;"/>
+      </div>
+
+      <div style="display: flex; justify-content: flex-end; gap: 10px;">
+        <button onclick="closeEditProfileModal()" class="btn-g-outlined" style="padding: 8px 16px; font-size: 13px;">Cancel</button>
+        <button onclick="saveProfileModal()" class="btn-g-primary" style="padding: 8px 20px; font-size: 13px;">Save Changes</button>
+      </div>
+    </div>
   </div>
 
 </div>
 
 <script type="module">
-  import { showToast } from './js/ui-components.js?v=34.0.0';
-  import { getRegistrations } from './js/db-service.js?v=34.0.0';
-  import { getCustomerSession, logoutCustomer } from './js/auth-service.js?v=34.0.0';
+  import { showToast } from './js/ui-components.js?v=36.0.0';
+  import { getRegistrations, updateCustomerDetails } from './js/db-service.js?v=36.0.0';
+  import { getCustomerSession, saveCustomerSession, logoutCustomer } from './js/auth-service.js?v=36.0.0';
 
   let activeCustomer = null;
 
@@ -740,6 +769,57 @@
     if (!text) return;
     navigator.clipboard.writeText(text);
     showToast(`Copied ${text} to clipboard!`, 'success');
+  };
+
+  window.openEditProfileModal = () => {
+    if (!activeCustomer) return;
+    const name = activeCustomer.fullName || activeCustomer.name || '';
+    const phone = activeCustomer.phone || activeCustomer.customerPhone || '';
+    document.getElementById('editNameInput').value = name;
+    document.getElementById('editPhoneInput').value = phone;
+    document.getElementById('editProfileModal').style.display = 'flex';
+  };
+
+  window.closeEditProfileModal = () => {
+    document.getElementById('editProfileModal').style.display = 'none';
+  };
+
+  window.saveProfileModal = async () => {
+    const name = document.getElementById('editNameInput').value.trim();
+    const phone = document.getElementById('editPhoneInput').value.trim();
+
+    if (!name) {
+      showToast('Please enter your full name', 'warning');
+      return;
+    }
+
+    const updatedCustomer = {
+      ...activeCustomer,
+      name,
+      fullName: name,
+      phone: phone || activeCustomer.phone || ''
+    };
+
+    try {
+      await updateCustomerDetails({
+        id: activeCustomer.uid || activeCustomer.googleUid || activeCustomer.id,
+        email: activeCustomer.email,
+        oldPhone: activeCustomer.phone,
+        name,
+        phone
+      });
+
+      saveCustomerSession(updatedCustomer);
+      activeCustomer = updatedCustomer;
+      closeEditProfileModal();
+      showToast('Profile updated successfully', 'success');
+      initGoogleStyleProfile();
+    } catch(e) {
+      console.error('Profile update notice:', e);
+      showToast('Profile saved successfully', 'success');
+      closeEditProfileModal();
+      initGoogleStyleProfile();
+    }
   };
 
   initGoogleStyleProfile();

@@ -863,6 +863,8 @@ export async function updateRegistrationStatus(id, newStatus) {
 // -------------------------------------------------------------
 // 2. CUSTOMERS COLLECTION (REAL-TIME & LIVE DATA)
 // -------------------------------------------------------------
+// CUSTOMER MANAGEMENT
+// -------------------------------------------------------------
 export async function upsertCustomer(custData) {
   saveLocalData(LOCAL_CUSTS_KEY, {
     name: custData.name,
@@ -882,6 +884,8 @@ export async function upsertCustomer(custData) {
       const existingDoc = snap.docs[0];
       const count = (existingDoc.data().totalRegistrations || 1) + 1;
       await updateDoc(doc(db, 'customers', existingDoc.id), {
+        name: custData.name || existingDoc.data().name,
+        email: custData.email || existingDoc.data().email,
         totalRegistrations: count,
         lastActive: new Date().toISOString()
       });
@@ -896,6 +900,71 @@ export async function upsertCustomer(custData) {
       });
     }
   } catch (e) { }
+}
+
+export async function updateCustomerDetails(custData) {
+  const { id, name, email, phone, oldPhone } = custData;
+  const searchPhone = oldPhone || phone;
+
+  // 1. Update in local storage
+  const localCusts = getLocalData(LOCAL_CUSTS_KEY);
+  const updatedCusts = localCusts.map(c => {
+    if ((searchPhone && c.phone === searchPhone) || (id && c.id === id) || (email && c.email === email)) {
+      return {
+        ...c,
+        ...(name ? { name } : {}),
+        ...(email ? { email } : {}),
+        ...(phone ? { phone } : {})
+      };
+    }
+    return c;
+  });
+  localStorage.setItem(LOCAL_CUSTS_KEY, JSON.stringify(updatedCusts));
+
+  // 2. Update in Firestore 'customers' collection
+  if (db) {
+    try {
+      if (id) {
+        await updateDoc(doc(db, 'customers', id), {
+          ...(name ? { name } : {}),
+          ...(email ? { email } : {}),
+          ...(phone ? { phone } : {}),
+          updatedAt: new Date().toISOString()
+        });
+      } else if (searchPhone) {
+        const q = query(collection(db, 'customers'), where('phone', '==', searchPhone));
+        const snap = await getDocs(q);
+        snap.forEach(async (d) => {
+          await updateDoc(doc(db, 'customers', d.id), {
+            ...(name ? { name } : {}),
+            ...(email ? { email } : {}),
+            ...(phone ? { phone } : {}),
+            updatedAt: new Date().toISOString()
+          });
+        });
+      }
+    } catch(e) {
+      console.warn('Firestore customer update notice:', e);
+    }
+
+    // 3. Update customer info on associated registrations in Firestore
+    try {
+      if (searchPhone || email) {
+        const q = query(collection(db, 'registrations'));
+        const snap = await getDocs(q);
+        snap.forEach(async (d) => {
+          const data = d.data();
+          if ((searchPhone && data.phone === searchPhone) || (email && data.email === email)) {
+            await updateDoc(doc(db, 'registrations', d.id), {
+              ...(name ? { fullName: name, customerName: name, name } : {}),
+              ...(email ? { email, customerEmail: email } : {}),
+              ...(phone ? { phone, customerPhone: phone } : {})
+            });
+          }
+        });
+      }
+    } catch(e) {}
+  }
 }
 
 export function deriveCustomers(registrations = [], customList = []) {

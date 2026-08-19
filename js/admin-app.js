@@ -6,7 +6,7 @@ import {
   getRegistrations, getRegistrationById, updateRegistrationStatus, getCustomers, getProducts, addProduct, updateProduct, deleteProduct,
   getSupportTickets, createSupportTicket, replySupportTicket, updateTicketStatus,
   getClaims, createClaim, updateClaimStatus, getRecentActivity, generateUniqueId, calculateWarrantyDates,
-  subscribeToRegistrations, subscribeToCustomers, DEFAULT_CATALOG_PRODUCTS, upsertCustomer,
+  subscribeToRegistrations, subscribeToCustomers, DEFAULT_CATALOG_PRODUCTS, upsertCustomer, updateCustomerDetails,
   getMarketplaces, addMarketplace, deleteMarketplace, subscribeToMarketplaces,
   getTermsAndConditions, saveTermsAndConditions
 } from './db-service.js?v=16.0.0';
@@ -580,6 +580,7 @@ function renderCustomersView() {
               <th>Status</th>
               <th>Source</th>
               <th>Created On</th>
+              <th style="text-align: right;">Action</th>
             </tr>
           </thead>
           <tbody>
@@ -593,10 +594,15 @@ function renderCustomersView() {
                 <td><span class="badge badge-active">Active</span></td>
                 <td><span style="font-size: 12px; color: #64748b; background: #f1f5f9; padding: 2px 8px; border-radius: 6px;">web</span></td>
                 <td style="color: #64748b; font-size: 12.5px;">${formatDate(c.createdDate || c.createdAt)}</td>
+                <td style="text-align: right;" onclick="event.stopPropagation();">
+                  <button class="btn btn-secondary btn-sm" onclick="openEditCustomerModal('${c.phone}')" style="padding: 4px 10px; font-weight: 600;">
+                    <i class="ti ti-edit"></i> Edit
+                  </button>
+                </td>
               </tr>
             `).join('') || `
               <tr>
-                <td colspan="6" style="text-align: center; padding: 40px 20px; color: #64748b;">
+                <td colspan="7" style="text-align: center; padding: 40px 20px; color: #64748b;">
                   <i class="ti ti-users" style="font-size: 32px; display: block; margin-bottom: 8px; color: #3b82f6;"></i>
                   <div style="font-weight: 700; font-size: 14px;">No customer records found</div>
                   <div style="font-size: 12px; color: #94a3b8; margin-top: 4px;">Submit a registration from step3-details.html to automatically create customer records.</div>
@@ -617,6 +623,57 @@ function renderCustomersView() {
     (newPage) => { state.filters.page = newPage; renderCustomersView(); }
   );
 }
+
+window.openEditCustomerModal = (phone) => {
+  const cust = (state.customers || []).find(c => c.phone === phone);
+  if (!cust) return;
+
+  showModal({
+    title: 'Edit Customer Profile',
+    bodyHtml: `
+      <form id="editCustForm" onsubmit="event.preventDefault();">
+        <div class="form-group">
+          <label class="form-label">Full Name <span class="req">*</span></label>
+          <input type="text" id="editCName" class="form-control" value="${cust.name || ''}" required/>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Phone Number <span class="req">*</span></label>
+          <input type="tel" id="editCPhone" class="form-control" value="${cust.phone || ''}" maxlength="10" required pattern="[0-9]{10}"/>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Email Address</label>
+          <input type="email" id="editCEmail" class="form-control" value="${cust.email || ''}"/>
+        </div>
+      </form>
+    `,
+    confirmText: 'Save Changes',
+    onConfirm: async () => {
+      const name = document.getElementById('editCName').value.trim();
+      const newPhone = document.getElementById('editCPhone').value.trim();
+      const email = document.getElementById('editCEmail').value.trim();
+
+      if (!name) {
+        showToast('Please enter a valid customer name', 'warning');
+        return false;
+      }
+      if (!newPhone || !/^[0-9]{10}$/.test(newPhone)) {
+        showToast('Please enter a valid 10-digit phone number', 'warning');
+        return false;
+      }
+
+      await updateCustomerDetails({
+        id: cust.id,
+        oldPhone: cust.phone,
+        phone: newPhone,
+        name,
+        email
+      });
+
+      showToast('Customer profile updated', 'success');
+      refreshCurrentView();
+    }
+  });
+};
 
 window.openAddCustomerModal = () => {
   showModal({
