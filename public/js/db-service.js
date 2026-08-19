@@ -33,13 +33,27 @@ export function generateUniqueId(prefix = 'SB-') {
 
 // Helper: Calculate Start & End Date and Validity
 export function calculateWarrantyDates(purchaseDateStr, warrantyMonths = 12) {
-  let startDate = new Date(purchaseDateStr);
+  // Parse date-only values in local time. `new Date('YYYY-MM-DD')` is UTC and
+  // can otherwise move the displayed date back a day in western timezones.
+  let startDate;
+  if (typeof purchaseDateStr === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(purchaseDateStr)) {
+    const [year, month, day] = purchaseDateStr.split('-').map(Number);
+    startDate = new Date(year, month - 1, day);
+  } else {
+    startDate = new Date(purchaseDateStr);
+  }
   if (isNaN(startDate.getTime())) {
     startDate = new Date();
   }
   const months = Math.max(1, parseInt(warrantyMonths, 10) || 12);
   const endDate = new Date(startDate);
+  // Clamp to the last valid day of the target month (e.g. Jan 31 + one month
+  // is Feb 28/29, not a date in March).
+  const startDay = startDate.getDate();
+  endDate.setDate(1);
   endDate.setMonth(endDate.getMonth() + months);
+  const lastDayOfTargetMonth = new Date(endDate.getFullYear(), endDate.getMonth() + 1, 0).getDate();
+  endDate.setDate(Math.min(startDay, lastDayOfTargetMonth));
 
   const today = new Date();
   today.setHours(0, 0, 0, 0);
@@ -50,10 +64,14 @@ export function calculateWarrantyDates(purchaseDateStr, warrantyMonths = 12) {
   const rawMonthsLeft = isExpired ? 0 : Math.ceil(daysRemaining / 30.4375);
   const monthsLeft = Math.min(months, Math.max(0, rawMonthsLeft));
 
-  let startIso = new Date().toISOString().split('T')[0];
-  let endIso = new Date().toISOString().split('T')[0];
-  try { startIso = startDate.toISOString().split('T')[0]; } catch(e) {}
-  try { endIso = endDate.toISOString().split('T')[0]; } catch(e) {}
+  const toLocalIsoDate = (date) => {
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const day = String(date.getDate()).padStart(2, '0');
+    return `${year}-${month}-${day}`;
+  };
+  const startIso = toLocalIsoDate(startDate);
+  const endIso = toLocalIsoDate(endDate);
 
   return {
     startDate: startIso,
@@ -142,7 +160,9 @@ export async function createWarrantyRegistration(data, invoiceFile = null) {
     createdAt: new Date().toISOString()
   };
 
-  saveLocalData(LOCAL_REGS_KEY, { id: 'loc_' + Date.now(), ...regData });
+  const localId = 'loc_' + Date.now();
+  regData.id = localId;
+  saveLocalData(LOCAL_REGS_KEY, { ...regData });
 
   if (db) {
     try {
@@ -150,6 +170,14 @@ export async function createWarrantyRegistration(data, invoiceFile = null) {
       const timeoutPromise = new Promise((_, reject) => setTimeout(() => reject(new Error('Firestore Sync Timeout')), 2500));
       const docRef = await Promise.race([fsPromise, timeoutPromise]);
       regData.id = docRef.id;
+      // Keep the offline record in sync with its cloud document so subsequent
+      // status updates target the correct Firestore registration.
+      try {
+        const localList = getLocalData(LOCAL_REGS_KEY);
+        localStorage.setItem(LOCAL_REGS_KEY, JSON.stringify(localList.map(item =>
+          item.id === localId ? { ...item, id: docRef.id } : item
+        )));
+      } catch (e) { }
     } catch (e) {
       console.warn('Firestore write fallback active:', e);
       regData.id = 'loc_' + Date.now();
@@ -747,7 +775,9 @@ export async function getRegistrations() {
 }
 
 export async function updateRegistrationStatus(id, newStatus) {
+  if (!id || !newStatus) throw new Error('Registration ID and status are required.');
   let targetReg = null;
+  let updated = false;
   try {
     const list = getLocalData(LOCAL_REGS_KEY);
     const found = list.find(r => r.id === id || r.warrantyId === id);
@@ -755,23 +785,39 @@ export async function updateRegistrationStatus(id, newStatus) {
       found.status = newStatus;
       localStorage.setItem(LOCAL_REGS_KEY, JSON.stringify(list));
       targetReg = found;
+      updated = true;
     }
   } catch (e) { }
 
   if (db && !id.startsWith('loc_')) {
     try {
-      const ref = doc(db, 'registrations', id);
-      const snap = await getDoc(ref);
+      let ref = doc(db, 'registrations', id);
+      let snap = await getDoc(ref);
+      // The UI may supply the public warranty ID rather than the Firestore
+      // document ID. Resolve it before attempting the update.
+      if (!snap.exists()) {
+        const match = await getDocs(query(collection(db, 'registrations'), where('warrantyId', '==', id), limit(1)));
+        if (!match.empty) {
+          ref = match.docs[0].ref;
+          snap = match.docs[0];
+        }
+      }
       if (snap.exists()) {
         targetReg = { id: snap.id, ...snap.data() };
+        await updateDoc(ref, { status: newStatus, updatedAt: new Date().toISOString() });
+        targetReg.status = newStatus;
+        updated = true;
       }
-      await updateDoc(ref, { status: newStatus, updatedAt: new Date().toISOString() });
-    } catch (e) { }
+    } catch (e) {
+      console.warn('Registration status sync failed:', e);
+    }
   }
 
+  if (!updated) throw new Error('Registration could not be found or updated.');
   if (targetReg) {
     sendStatusUpdateEmail(targetReg, newStatus).catch(() => {});
   }
+  return targetReg;
 }
 
 // -------------------------------------------------------------
@@ -822,7 +868,10 @@ export function deriveCustomers(registrations = [], customList = []) {
         name: c.name || 'Customer',
         email: c.email || '',
         phone: c.phone,
-        totalRegistrations: c.totalRegistrations || 1,
+        // Registration records below are the authoritative count when present.
+        // Preserve a cloud-only total as a lower bound for older data.
+        totalRegistrations: 0,
+        storedTotalRegistrations: Number(c.totalRegistrations) || 0,
         createdDate: c.createdDate || c.createdAt || new Date().toISOString().split('T')[0],
         status: c.status || 'Active'
       });
@@ -834,7 +883,7 @@ export function deriveCustomers(registrations = [], customList = []) {
     if (phoneKey) {
       const existing = map.get(phoneKey);
       if (existing) {
-        existing.totalRegistrations = (existing.totalRegistrations || 1) + 1;
+        existing.totalRegistrations += 1;
         if (!existing.email && r.email) existing.email = r.email;
         if ((!existing.name || existing.name === 'Customer') && (r.fullName || r.name)) {
           existing.name = r.fullName || r.name;
@@ -846,6 +895,7 @@ export function deriveCustomers(registrations = [], customList = []) {
           email: r.email || '',
           phone: r.phone || 'N/A',
           totalRegistrations: 1,
+          storedTotalRegistrations: 0,
           createdDate: (r.createdAt || r.purchaseDate || new Date().toISOString()).split('T')[0],
           status: 'Active'
         });
@@ -853,7 +903,10 @@ export function deriveCustomers(registrations = [], customList = []) {
     }
   });
 
-  return Array.from(map.values());
+  return Array.from(map.values()).map(({ storedTotalRegistrations = 0, ...customer }) => ({
+    ...customer,
+    totalRegistrations: Math.max(customer.totalRegistrations, storedTotalRegistrations)
+  }));
 }
 
 export function subscribeToCustomers(callback) {
@@ -926,18 +979,23 @@ export async function getProducts() {
 
   if (db) {
     try {
-      const timeout = new Promise((_, reject) => setTimeout(() => reject(new Error('Firestore getProducts timeout')), 2500));
-      
-      const prodsPromise = getDocs(collection(db, 'products')).catch(() => null);
-      const delPromise = getDocs(collection(db, 'deleted_products')).catch(() => null);
-
-      const [snapResult, remSnapResult] = await Promise.race([
-        Promise.all([prodsPromise, delPromise]),
-        timeout
-      ]).catch(() => [null, null]);
+      // Read the product collection independently. Previously this used a
+      // single Promise.all with deleted_products: a slow/failed deletion read
+      // caused *all* live products to be discarded as well.
+      const withTimeout = (promise, ms = 4000) => Promise.race([
+        promise,
+        new Promise(resolve => setTimeout(() => resolve(null), ms))
+      ]);
+      const [snapResult, remSnapResult] = await Promise.all([
+        withTimeout(getDocs(collection(db, 'products')).catch(() => null)),
+        withTimeout(getDocs(collection(db, 'deleted_products')).catch(() => null))
+      ]);
 
       if (snapResult && snapResult.forEach) {
-        snapResult.forEach(d => fsList.push({ id: d.id, ...d.data() }));
+        // The Firestore document ID is the unique catalog key. Some older
+        // product documents also contain an `id` field; allowing it to replace
+        // d.id merges unrelated products and makes entries disappear.
+        snapResult.forEach(d => fsList.push({ ...d.data(), id: d.id }));
       }
       if (remSnapResult && remSnapResult.forEach) {
         remSnapResult.forEach(d => {
@@ -1426,4 +1484,3 @@ export async function saveTermsAndConditions(content) {
     }
   }
 }
-

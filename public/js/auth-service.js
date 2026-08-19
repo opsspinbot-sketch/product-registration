@@ -267,26 +267,9 @@ export async function logoutCustomer() {
 
 export async function loginCustomerWithGoogle() {
   if (!auth) {
-    // Fallback simulation mode if offline or CDN blocked
-    // Check if customer already has a saved profile
-    const existingSession = getCustomerSession();
-    if (existingSession && existingSession.fullName && existingSession.email) {
-      existingSession.lastLogin = new Date().toISOString();
-      saveCustomerSession(existingSession);
-      return { isFirstTime: false, profile: existingSession };
-    }
-    const fallbackProfile = {
-      googleUid: 'simulated_google_' + Date.now(),
-      fullName: 'SpinBot Customer',
-      email: 'customer.spinbot@gmail.com',
-      photoURL: 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=120&auto=format&fit=crop&q=80',
-      accountCreatedAt: new Date().toISOString(),
-      lastLogin: new Date().toISOString(),
-      provider: 'google.com',
-      isFirstTime: false
-    };
-    saveCustomerSession(fallbackProfile);
-    return { isFirstTime: false, profile: fallbackProfile };
+    // Never fabricate a shared customer account when Firebase is unavailable:
+    // it can expose the previous customer's registrations on the same device.
+    throw new Error('Google sign-in is currently unavailable. Please continue with your email address.');
   }
 
   try {
@@ -393,24 +376,7 @@ export async function loginCustomerWithGoogle() {
     };
   } catch (err) {
     if (err.code === 'auth/configuration-not-found' || err.message?.includes('configuration-not-found') || err.code === 'auth/unauthorized-domain' || err.message?.includes('unauthorized-domain')) {
-      console.warn('Firebase Google Auth Provider not enabled or domain unauthorized in Console. Using fallback customer sign-in mode.');
-      let session = getCustomerSession();
-      if (!session) {
-        session = {
-          googleUid: 'google_user_' + Math.floor(100000 + Math.random() * 900000),
-          fullName: 'SpinBot Customer',
-          email: 'ops.spinbot@gmail.com',
-          photoURL: 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=120&auto=format&fit=crop&q=80',
-          accountCreatedAt: new Date().toISOString(),
-          lastLogin: new Date().toISOString(),
-          provider: 'google.com',
-          status: 'Active'
-        };
-      } else {
-        session.lastLogin = new Date().toISOString();
-      }
-      saveCustomerSession(session);
-      return { isFirstTime: false, profile: session };
+      throw new Error('Google sign-in is not configured for this domain. Please continue with your email address.');
     }
     if (err.code === 'auth/popup-closed-by-user') {
       throw new Error('Google Sign-In window was closed before completion.');
@@ -709,4 +675,3 @@ export async function openCustomerProfileModal() {
 
   modalEl.style.display = 'flex';
 }
-

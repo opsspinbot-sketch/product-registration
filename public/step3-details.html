@@ -562,8 +562,12 @@
       showToast('Product registered successfully!', 'success');
       setTimeout(() => window.location.href = `success.html?id=${encodeURIComponent(reg.warrantyId || 'SB-REG')}`, 600);
     } catch (err) {
-      console.warn('Registration save notice:', err);
-      window.location.href = 'success.html?id=SB-REG';
+      console.warn('Registration save failed:', err);
+      if (submitBtn) {
+        submitBtn.disabled = false;
+        submitBtn.innerHTML = '<span>Activate Warranty</span>';
+      }
+      showToast(err.message || 'Could not save your registration. Please try again.', 'error');
     }
   };
 </script>
