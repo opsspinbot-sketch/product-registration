@@ -404,6 +404,16 @@
     ).join('');
   }
 
+  function esc(s) {
+    if (s === null || s === undefined) return '';
+    return String(s)
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;')
+      .replace(/'/g, '&#039;');
+  }
+
   function renderDropdown() {
     const dd = document.getElementById('productDropdown');
     if (!dd) return;
@@ -422,7 +432,7 @@
       const normCat = normalizeCategory(p.category);
       const matchCat = activeCategory === 'All' || normCat === activeCategory;
       const q = searchQuery.toLowerCase();
-      const matchQ = !q || (p.name && p.name.toLowerCase().includes(q)) || (p.sku && p.sku.toLowerCase().includes(q));
+      const matchQ = !q || (p.name && String(p.name).toLowerCase().includes(q)) || (p.sku && String(p.sku).toLowerCase().includes(q));
       return matchCat && matchQ;
     });
 
@@ -439,21 +449,26 @@
       ` + filtered.map(p => {
       const isSel = selectedProduct && (selectedProduct.sku === p.sku || selectedProduct.name === p.name || selectedProduct.id === p.id);
       const imgSrc = p.image || p.productImage;
+      const safeName = esc(p.name || 'SpinBot Product');
+      const safeSku = esc(p.sku || 'N/A');
+      const safeWarranty = esc(p.warrantyPeriod || '12 Months');
+      const safeCat = esc(normalizeCategory(p.category));
+
       return `
-        <div class="g-product-item ${isSel ? 'selected' : ''}" onclick="selectProd('${p.id}')">
+        <div class="g-product-item ${isSel ? 'selected' : ''}" onclick="selectProd('${esc(p.id)}')">
           <div class="g-product-info">
             <div style="width: 38px; height: 38px; border-radius: 8px; background: #f8f9fa; border: 1px solid #e2e8f0; overflow: hidden; display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
-              ${imgSrc ? `<img src="${imgSrc}" alt="${p.name}" style="width: 100%; height: 100%; object-fit: cover;"/>` : `<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#76D300" stroke-width="2"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"></path></svg>`}
+              ${imgSrc ? `<img src="${esc(imgSrc)}" alt="${safeName}" style="width: 100%; height: 100%; object-fit: cover;"/>` : `<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#76D300" stroke-width="2"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"></path></svg>`}
             </div>
             <div>
-              <div class="g-product-name">${p.name}</div>
+              <div class="g-product-name">${safeName}</div>
               <div style="display: flex; align-items: center; gap: 8px; margin-top: 2px;">
-                <span class="g-product-sku">SKU: ${p.sku || 'N/A'}</span>
-                <span style="font-size: 11px; background: #f1f5f9; color: #475569; padding: 1px 6px; border-radius: 4px; font-weight: 500;">${normalizeCategory(p.category)}</span>
+                <span class="g-product-sku">SKU: ${safeSku}</span>
+                <span style="font-size: 11px; background: #f1f5f9; color: #475569; padding: 1px 6px; border-radius: 4px; font-weight: 500;">${safeCat}</span>
               </div>
             </div>
           </div>
-          <span class="g-product-warranty">${p.warrantyPeriod || '12 Months'} Warranty</span>
+          <span class="g-product-warranty">${safeWarranty} Warranty</span>
         </div>
       `;
     }).join('');
