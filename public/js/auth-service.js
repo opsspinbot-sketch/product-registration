@@ -587,32 +587,37 @@ export async function openCustomerProfileModal() {
   modalEl.style.cssText = 'display: flex; position: fixed; inset: 0; background: rgba(15,23,42,0.75); backdrop-filter: blur(6px); z-index: 99999; align-items: center; justify-content: center; padding: 20px;';
   document.body.appendChild(modalEl);
 
+  function esc(s) {
+    if (s === null || s === undefined) return '';
+    return String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#039;');
+  }
+
   const registeredProductsHtml = userRegistrations.length > 0 ? userRegistrations.map(r => `
     <div style="background: #ffffff; border: 1.5px solid #e2e8f0; border-radius: 14px; padding: 16px; margin-bottom: 12px; box-shadow: 0 4px 12px rgba(15,23,42,0.04); transition: transform 0.2s ease;" onmouseover="this.style.transform='translateY(-2px)'" onmouseout="this.style.transform='none'">
       <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px;">
         <div style="font-size: 11px; font-weight: 800; color: #76D300; background: #0f172a; padding: 4px 10px; border-radius: 6px; font-family: monospace; letter-spacing: 1px;">
-          ${r.warrantyId || 'SB-REG'}
+          ${esc(r.warrantyId || 'SB-REG')}
         </div>
         <span style="font-size: 11px; font-weight: 800; padding: 4px 10px; border-radius: 20px; text-transform: uppercase; ${
           r.status === 'Approved' || r.status === 'Active' ? 'background: #dcfce7; color: #166534; border: 1px solid #86efac;' : 'background: #fef3c7; color: #92400e; border: 1px solid #fde68a;'
         }">
-          ${r.status || 'Pending Verification'}
+          ${esc(r.status || 'Pending Verification')}
         </span>
       </div>
 
       <div style="font-size: 14.5px; font-weight: 800; color: #0f172a; margin-bottom: 4px;">
-        📦 ${r.product || 'SpinBot Product'}
+        📦 ${esc(r.product || 'SpinBot Product')}
       </div>
 
       <div style="display: flex; flex-wrap: wrap; gap: 12px; font-size: 12px; color: #64748b; margin-bottom: 10px;">
-        <span>🏷️ SKU: <strong>${r.sku || 'N/A'}</strong></span>
-        <span>📅 Date: <strong>${r.purchaseDate || 'N/A'}</strong></span>
-        <span>🛒 Platform: <strong>${r.purchasePlatform || 'Amazon'}</strong></span>
+        <span>🏷️ SKU: <strong>${esc(r.sku || 'N/A')}</strong></span>
+        <span>📅 Date: <strong>${esc(r.purchaseDate || 'N/A')}</strong></span>
+        <span>🛒 Platform: <strong>${esc(r.purchasePlatform || 'Amazon')}</strong></span>
       </div>
 
       <div style="display: flex; align-items: center; justify-content: space-between; border-top: 1px dashed #e2e8f0; padding-top: 10px; margin-top: 6px;">
         <div style="font-size: 12px; color: #15803d; font-weight: 700;">
-          🛡️ Valid Until: ${r.endDate || 'N/A'}
+          🛡️ Valid Until: ${esc(r.endDate || 'N/A')}
         </div>
         <a href="success.html?id=${encodeURIComponent(r.warrantyId || '')}" style="font-size: 12px; font-weight: 800; color: #0f172a; text-decoration: none; background: #f1f5f9; padding: 6px 12px; border-radius: 8px; display: inline-flex; align-items: center; gap: 4px;">
           View Certificate <i class="ti ti-arrow-right"></i>
@@ -636,10 +641,10 @@ export async function openCustomerProfileModal() {
         <button onclick="document.getElementById('customerProfileModal').remove()" style="position: absolute; top: 16px; right: 16px; background: rgba(255,255,255,0.1); border: none; color: #ffffff; width: 32px; height: 32px; border-radius: 50%; cursor: pointer; font-size: 16px; display: flex; align-items: center; justify-content: center;">✕</button>
 
         <div style="display: flex; align-items: center; gap: 14px;">
-          <img src="${session.photoURL || 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=120&auto=format&fit=crop&q=80'}" alt="${session.fullName || 'Customer'}" style="width: 54px; height: 54px; border-radius: 50%; border: 2.5px solid #76D300; object-fit: cover; box-shadow: 0 4px 14px rgba(118,211,0,0.3);"/>
+          <img src="${session.photoURL || 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=120&auto=format&fit=crop&q=80'}" alt="${esc(session.fullName || 'Customer')}" style="width: 54px; height: 54px; border-radius: 50%; border: 2.5px solid #76D300; object-fit: cover; box-shadow: 0 4px 14px rgba(118,211,0,0.3);"/>
           <div>
-            <div style="font-size: 18px; font-weight: 900; color: #ffffff; letter-spacing: -0.3px;">${session.fullName || session.name}</div>
-            <div style="font-size: 12.5px; color: rgba(255,255,255,0.7); font-weight: 500;">${session.email}</div>
+            <div style="font-size: 18px; font-weight: 900; color: #ffffff; letter-spacing: -0.3px;">${esc(session.fullName || session.name)}</div>
+            <div style="font-size: 12.5px; color: rgba(255,255,255,0.7); font-weight: 500;">${esc(session.email)}</div>
             <div style="display: inline-flex; align-items: center; gap: 4px; font-size: 10.5px; font-weight: 800; color: #76D300; background: rgba(118,211,0,0.15); padding: 2px 8px; border-radius: 12px; margin-top: 6px; border: 1px solid rgba(118,211,0,0.3);">
               <i class="ti ti-shield-check"></i> Verified SpinBot Owner
             </div>

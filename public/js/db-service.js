@@ -4,20 +4,39 @@ import {
   collection, doc, getDocs, getDoc, addDoc, updateDoc, deleteDoc, setDoc, query, where, orderBy, limit, serverTimestamp, onSnapshot 
 } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
-// Helper: LocalStorage Backup Keys
+// Helper: HTML Escaper for XSS Prevention
+export function escapeHTML(str) {
+  if (str === null || str === undefined) return '';
+  return String(str)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#039;');
+}
+
+// Helper: LocalStorage Backup Keys (Quota-Safe)
 const LOCAL_REGS_KEY = 'sb_local_registrations';
 const LOCAL_CUSTS_KEY = 'sb_local_customers';
 const LOCAL_PRODS_KEY = 'sb_local_products';
 
 function getLocalData(key) {
-  try { return JSON.parse(localStorage.getItem(key) || '[]'); } catch (e) { return []; }
+  try { 
+    const data = localStorage.getItem(key);
+    const parsed = data ? JSON.parse(data) : [];
+    return Array.isArray(parsed) ? parsed : [];
+  } catch (e) { return []; }
 }
+
 function saveLocalData(key, item) {
   try {
     const list = getLocalData(key);
     list.unshift(item);
+    if (list.length > 50) list.length = 50; // Cap local cache to 50 items
     localStorage.setItem(key, JSON.stringify(list));
-  } catch (e) { }
+  } catch (e) {
+    console.warn(`LocalStorage save warning for ${key}:`, e);
+  }
 }
 
 // Helper: Generate Clean Ticket IDs (e.g. Ticket #1234)
@@ -31,13 +50,26 @@ export function generateUniqueId(prefix = 'SB-') {
   return `${prefix}${randomNum}`;
 }
 
+// Helper: Safely Format Date Strings without UTC Timezone Drift
+export function formatDateSafely(dateInput, options = { day: '2-digit', month: 'long', year: 'numeric' }) {
+  if (!dateInput) return 'N/A';
+  if (typeof dateInput === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(dateInput.trim())) {
+    const [year, month, day] = dateInput.trim().split('-').map(Number);
+    const dateObj = new Date(year, month - 1, day);
+    return dateObj.toLocaleDateString('en-IN', options);
+  }
+  const dObj = new Date(dateInput);
+  if (isNaN(dObj.getTime())) return String(dateInput);
+  return dObj.toLocaleDateString('en-IN', options);
+}
+
 // Helper: Calculate Start & End Date and Validity
 export function calculateWarrantyDates(purchaseDateStr, warrantyMonths = 12) {
   // Parse date-only values in local time. `new Date('YYYY-MM-DD')` is UTC and
   // can otherwise move the displayed date back a day in western timezones.
   let startDate;
-  if (typeof purchaseDateStr === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(purchaseDateStr)) {
-    const [year, month, day] = purchaseDateStr.split('-').map(Number);
+  if (typeof purchaseDateStr === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(purchaseDateStr.trim())) {
+    const [year, month, day] = purchaseDateStr.trim().split('-').map(Number);
     startDate = new Date(year, month - 1, day);
   } else {
     startDate = new Date(purchaseDateStr);
@@ -162,7 +194,15 @@ export async function createWarrantyRegistration(data, invoiceFile = null) {
 
   const localId = 'loc_' + Date.now();
   regData.id = localId;
-  saveLocalData(LOCAL_REGS_KEY, { ...regData });
+
+  // Compact backup for localStorage to prevent QuotaExceededError on large Base64 images
+  const localBackup = { ...regData };
+  if (localBackup.invoiceUrl && localBackup.invoiceUrl.startsWith('data:')) {
+    if (localBackup.invoiceUrl.length > 50000) {
+      localBackup.invoiceUrl = localBackup.invoiceUrl.slice(0, 200) + '...[local_preview_truncated]';
+    }
+  }
+  saveLocalData(LOCAL_REGS_KEY, localBackup);
 
   if (db) {
     try {
