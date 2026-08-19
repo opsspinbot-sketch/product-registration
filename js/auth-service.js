@@ -140,7 +140,10 @@ export async function loginWithGoogle() {
       loginTime: new Date().toISOString()
     };
 
-    sessionStorage.setItem('sb_admin_session', JSON.stringify(session));
+    try {
+      sessionStorage.setItem('sb_admin_session', JSON.stringify(session));
+      localStorage.setItem('sb_admin_session', JSON.stringify(session));
+    } catch(e) {}
     return session;
   } catch (err) {
     if (err.code === 'auth/configuration-not-found' || err.message?.includes('configuration-not-found')) {
@@ -168,7 +171,7 @@ export async function loginAdmin(email, password) {
   const validCreds = getAdminCredentials();
   const allowedList = getAllowedAdminEmails();
 
-  if (!allowedList.includes(cleanEmail) && cleanEmail !== validCreds.email) {
+  if (!allowedList.includes(cleanEmail) && cleanEmail !== (validCreds.email || '').toLowerCase()) {
     throw new Error('Access Denied! Your email is not authorized for Admin Access.');
   }
 
@@ -184,7 +187,10 @@ export async function loginAdmin(email, password) {
     loginTime: new Date().toISOString()
   };
 
-  try { sessionStorage.setItem('sb_admin_session', JSON.stringify(session)); } catch(e) {}
+  try {
+    sessionStorage.setItem('sb_admin_session', JSON.stringify(session));
+    localStorage.setItem('sb_admin_session', JSON.stringify(session));
+  } catch(e) {}
   return session;
 }
 
@@ -195,13 +201,16 @@ export async function logoutAdmin() {
       await signOut(auth);
     } catch(e) {}
   }
-  try { sessionStorage.removeItem('sb_admin_session'); } catch (e) {}
+  try {
+    sessionStorage.removeItem('sb_admin_session');
+    localStorage.removeItem('sb_admin_session');
+  } catch (e) {}
   window.location.reload();
 }
 
 export function getAdminSession() {
   try {
-    const session = sessionStorage.getItem('sb_admin_session');
+    const session = localStorage.getItem('sb_admin_session') || sessionStorage.getItem('sb_admin_session');
     if (session) return JSON.parse(session);
   } catch (e) {}
   return null;
