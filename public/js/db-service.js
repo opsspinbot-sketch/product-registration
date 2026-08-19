@@ -951,7 +951,6 @@ export async function getProducts() {
 
   const removedList = [...new Set([...localRemoved, ...fsRemoved])].map(k => String(k).toLowerCase().trim());
   const map = new Map();
-  const getProductKey = (p) => (p.sku || p.name || p.id || '').toLowerCase().trim();
 
   const isRemoved = (p) => {
     if (!p) return false;
@@ -963,7 +962,7 @@ export async function getProducts() {
 
   // 1. Add Default Catalog Products (unless blacklisted/deleted by admin)
   DEFAULT_CATALOG_PRODUCTS.forEach(p => {
-    const key = getProductKey(p);
+    const key = (p.id || p.sku || p.name).toLowerCase().trim();
     if (!isRemoved(p)) {
       map.set(key, p);
     }
@@ -971,15 +970,15 @@ export async function getProducts() {
 
   // 2. Add LocalStorage items if not removed
   localList.forEach(p => {
-    const key = getProductKey(p);
+    const key = (p.id || p.sku || p.name).toLowerCase().trim();
     if (!isRemoved(p)) {
       map.set(key, { id: p.id || 'loc_' + Math.random(), ...p });
     }
   });
 
-  // 3. Add Firestore items if not removed (overwrites default/local if same SKU/ID)
+  // 3. Add Firestore items (keyed by unique doc ID so all products show without overwrites)
   fsList.forEach(p => {
-    const key = getProductKey(p);
+    const key = (p.id || (p.sku ? p.sku + '_' + p.name : p.name)).toLowerCase().trim();
     if (!isRemoved(p)) {
       map.set(key, { id: p.id, ...p });
     }

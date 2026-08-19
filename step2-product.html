@@ -174,7 +174,7 @@
   .g-product-list {
     border: 1px solid var(--g-border);
     border-radius: 16px;
-    max-height: 360px;
+    max-height: 480px;
     overflow-y: auto;
     background: #ffffff;
     padding: 8px;
@@ -389,6 +389,22 @@
     }
   }
 
+  function normalizeCategory(cat) {
+    if (!cat) return 'General';
+    const c = String(cat).trim();
+    const lower = c.toLowerCase();
+    if (lower.includes('mousepad')) return 'Gaming Mousepads';
+    if (lower.includes('trigger')) return 'Gaming Triggers';
+    if (lower.includes('laptop')) return 'Laptop Cooling';
+    if (lower.includes('earphone') || lower.includes('headphone') || lower.includes('headset') || lower.includes('battlebudz') || lower.includes('ranger')) return 'Earphones & Headphones';
+    if (lower.includes('cooler')) return 'Coolers';
+    if (lower.includes('keyboard')) return 'Keyboards';
+    if (lower.includes('mouse')) return 'Gaming Mice';
+    if (lower.includes('sleeve')) return 'Finger Sleeves';
+    if (lower.includes('controller') || lower.includes('gamepad') || lower.includes('arcade')) return 'Controllers & Gamepads';
+    return c;
+  }
+
   function renderTabs() {
     const el = document.getElementById('catTabs');
     if (!el) return;
@@ -396,7 +412,8 @@
       el.innerHTML = `<span style="font-size:12px; color: var(--g-text-sub);">Loading categories...</span>`;
       return;
     }
-    const cats = ['All', ...new Set(products.map(p => p.category || 'General'))];
+    const rawCats = products.map(p => normalizeCategory(p.category));
+    const cats = ['All', ...new Set(rawCats)];
     el.innerHTML = cats.map(c => 
       `<button class="g-chip ${c === activeCategory ? 'active' : ''}" onclick="filterCat('${c}')">${c}</button>`
     ).join('');
@@ -417,25 +434,38 @@
     }
 
     const filtered = products.filter(p => {
-      const matchCat = activeCategory === 'All' || (p.category || 'General') === activeCategory;
+      const normCat = normalizeCategory(p.category);
+      const matchCat = activeCategory === 'All' || normCat === activeCategory;
       const q = searchQuery.toLowerCase();
       const matchQ = !q || (p.name && p.name.toLowerCase().includes(q)) || (p.sku && p.sku.toLowerCase().includes(q));
       return matchCat && matchQ;
     });
 
     if (filtered.length === 0) {
-      dd.innerHTML = `<div style="padding: 20px; text-align: center; color: var(--g-text-sub);">No products found</div>`;
+      dd.innerHTML = `<div style="padding: 24px; text-align: center; color: var(--g-text-sub); font-size: 13.5px;">No products match your search/category criteria (${products.length} total products loaded).</div>`;
       return;
     }
 
-    dd.innerHTML = filtered.map(p => {
-      const isSel = selectedProduct && (selectedProduct.sku === p.sku || selectedProduct.name === p.name);
+    dd.innerHTML = `
+      <div style="padding: 6px 12px 10px; font-size: 12px; color: var(--g-text-sub); font-weight: 500; display: flex; align-items: center; justify-content: space-between; border-bottom: 1px dashed var(--g-border); margin-bottom: 6px;">
+        <span>Showing <strong>${filtered.length}</strong> of <strong>${products.length}</strong> SpinBot products</span>
+        <span style="color: #137333; font-weight: 600;">✓ Ready for warranty activation</span>
+      </div>
+      ` + filtered.map(p => {
+      const isSel = selectedProduct && (selectedProduct.sku === p.sku || selectedProduct.name === p.name || selectedProduct.id === p.id);
+      const imgSrc = p.image || p.productImage;
       return `
         <div class="g-product-item ${isSel ? 'selected' : ''}" onclick="selectProd('${p.id}')">
           <div class="g-product-info">
+            <div style="width: 38px; height: 38px; border-radius: 8px; background: #f8f9fa; border: 1px solid #e2e8f0; overflow: hidden; display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
+              ${imgSrc ? `<img src="${imgSrc}" alt="${p.name}" style="width: 100%; height: 100%; object-fit: cover;"/>` : `<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#76D300" stroke-width="2"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"></path></svg>`}
+            </div>
             <div>
               <div class="g-product-name">${p.name}</div>
-              <div class="g-product-sku">SKU: ${p.sku || 'N/A'}</div>
+              <div style="display: flex; align-items: center; gap: 8px; margin-top: 2px;">
+                <span class="g-product-sku">SKU: ${p.sku || 'N/A'}</span>
+                <span style="font-size: 11px; background: #f1f5f9; color: #475569; padding: 1px 6px; border-radius: 4px; font-weight: 500;">${normalizeCategory(p.category)}</span>
+              </div>
             </div>
           </div>
           <span class="g-product-warranty">${p.warrantyPeriod || '12 Months'} Warranty</span>
