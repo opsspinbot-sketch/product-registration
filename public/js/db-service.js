@@ -931,13 +931,11 @@ export async function getProducts() {
   const localRemoved = getLocalData(LOCAL_REMOVED_PRODS_KEY);
   let fsList = [];
   let fsRemoved = [];
-  let hasFirestoreData = false;
 
   if (db) {
     try {
       const snap = await getDocs(collection(db, 'products'));
       snap.forEach(d => fsList.push({ id: d.id, ...d.data() }));
-      if (!snap.empty) hasFirestoreData = true;
     } catch (e) { }
 
     try {
@@ -948,7 +946,6 @@ export async function getProducts() {
         if (data.id) fsRemoved.push(data.id);
         if (Array.isArray(data.keys)) fsRemoved.push(...data.keys);
       });
-      if (!remSnap.empty) hasFirestoreData = true;
     } catch (e) { }
   }
 
@@ -964,17 +961,15 @@ export async function getProducts() {
     return (k1 && removedList.includes(k1)) || (k2 && removedList.includes(k2)) || (k3 && removedList.includes(k3));
   };
 
-  // Only fall back to hardcoded DEFAULT_CATALOG_PRODUCTS if Firestore has NO entries
-  if (!hasFirestoreData && localList.length === 0) {
-    DEFAULT_CATALOG_PRODUCTS.forEach(p => {
-      const key = getProductKey(p);
-      if (!isRemoved(p)) {
-        map.set(key, p);
-      }
-    });
-  }
+  // 1. Add Default Catalog Products (unless blacklisted/deleted by admin)
+  DEFAULT_CATALOG_PRODUCTS.forEach(p => {
+    const key = getProductKey(p);
+    if (!isRemoved(p)) {
+      map.set(key, p);
+    }
+  });
 
-  // Add Local items if not removed
+  // 2. Add LocalStorage items if not removed
   localList.forEach(p => {
     const key = getProductKey(p);
     if (!isRemoved(p)) {
@@ -982,7 +977,7 @@ export async function getProducts() {
     }
   });
 
-  // Add Firestore items if not removed (overwrites default if present)
+  // 3. Add Firestore items if not removed (overwrites default/local if same SKU/ID)
   fsList.forEach(p => {
     const key = getProductKey(p);
     if (!isRemoved(p)) {
@@ -993,22 +988,68 @@ export async function getProducts() {
   return Array.from(map.values());
 }
 
+// Helper: Compress image data URL to max 400x400 to prevent oversized base64 strings
+export function compressImageDataUrl(dataUrl, maxWidth = 400, maxHeight = 400, quality = 0.8) {
+  return new Promise((resolve) => {
+    if (!dataUrl || typeof dataUrl !== 'string' || !dataUrl.startsWith('data:image')) {
+      resolve(dataUrl || '');
+      return;
+    }
+    const img = new Image();
+    img.onload = () => {
+      let width = img.width;
+      let height = img.height;
+      if (width > maxWidth || height > maxHeight) {
+        if (width > height) {
+          height = Math.round((height * maxWidth) / width);
+          width = maxWidth;
+        } else {
+          width = Math.round((width * maxHeight) / height);
+          height = maxHeight;
+        }
+      }
+      const canvas = document.createElement('canvas');
+      canvas.width = width;
+      canvas.height = height;
+      const ctx = canvas.getContext('2d');
+      ctx.drawImage(img, 0, 0, width, height);
+      resolve(canvas.toDataURL('image/jpeg', quality));
+    };
+    img.onerror = () => resolve(dataUrl);
+    img.src = dataUrl;
+  });
+}
+
 export async function addProduct(pData) {
   const cleanId = 'prod_' + Date.now();
+  
+  // Compress image to small base64 JPEG if it's a data URL
+  if (pData.image && pData.image.startsWith('data:image')) {
+    try { pData.image = await compressImageDataUrl(pData.image, 400, 400, 0.8); } catch(e) {}
+  }
+
   let created = { id: cleanId, ...pData };
+  saveLocalData(LOCAL_PRODS_KEY, created);
+
   if (db) {
     try {
-      const docRef = await addDoc(collection(db, 'products'), { ...pData, createdAt: new Date().toISOString() });
+      const fsPromise = addDoc(collection(db, 'products'), { ...pData, createdAt: new Date().toISOString() });
+      const timeoutPromise = new Promise((_, reject) => setTimeout(() => reject(new Error('Firestore Sync Timeout')), 2500));
+      const docRef = await Promise.race([fsPromise, timeoutPromise]);
       created = { id: docRef.id, ...pData };
+      saveLocalData(LOCAL_PRODS_KEY, created);
     } catch (e) {
-      console.warn('Firestore addProduct notice:', e);
+      console.warn('Firestore addProduct notice (saved locally):', e);
     }
   }
-  saveLocalData(LOCAL_PRODS_KEY, created);
   return created;
 }
 
 export async function updateProduct(id, pData) {
+  if (pData.image && pData.image.startsWith('data:image')) {
+    try { pData.image = await compressImageDataUrl(pData.image, 400, 400, 0.8); } catch(e) {}
+  }
+
   // Update local storage item if present
   try {
     const localList = getLocalData(LOCAL_PRODS_KEY);
@@ -1017,7 +1058,13 @@ export async function updateProduct(id, pData) {
   } catch(e) {}
 
   if (db && !id.startsWith('prod_') && !id.startsWith('loc_')) { 
-    try { await updateDoc(doc(db, 'products', id), pData); } catch (e) { } 
+    try {
+      const fsPromise = updateDoc(doc(db, 'products', id), pData);
+      const timeoutPromise = new Promise((_, reject) => setTimeout(() => reject(new Error('Firestore Sync Timeout')), 2500));
+      await Promise.race([fsPromise, timeoutPromise]);
+    } catch (e) {
+      console.warn('Firestore updateProduct notice (updated locally):', e);
+    } 
   }
 }
 

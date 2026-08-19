@@ -842,10 +842,25 @@ function openAddProductModal() {
               if(file){
                 const r = new FileReader();
                 r.onload = e => {
-                  document.getElementById('apImgPreview').src = e.target.result;
-                  document.getElementById('apImgPreviewBox').style.display = 'block';
-                  document.getElementById('apImgPlaceholderBox').style.display = 'none';
-                  window._tempAddImg = e.target.result;
+                  const rawUrl = e.target.result;
+                  const img = new Image();
+                  img.onload = () => {
+                    const canvas = document.createElement('canvas');
+                    let w = img.width, h = img.height;
+                    if (w > 400 || h > 400) {
+                      if (w > h) { h = Math.round((h * 400) / w); w = 400; }
+                      else { w = Math.round((w * 400) / h); h = 400; }
+                    }
+                    canvas.width = w; canvas.height = h;
+                    const ctx = canvas.getContext('2d');
+                    ctx.drawImage(img, 0, 0, w, h);
+                    const compressed = canvas.toDataURL('image/jpeg', 0.8);
+                    document.getElementById('apImgPreview').src = compressed;
+                    document.getElementById('apImgPreviewBox').style.display = 'block';
+                    document.getElementById('apImgPlaceholderBox').style.display = 'none';
+                    window._tempAddImg = compressed;
+                  };
+                  img.src = rawUrl;
                 };
                 r.readAsDataURL(file);
               }
