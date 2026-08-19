@@ -999,21 +999,17 @@ export async function getCustomers() {
 // 3. PRODUCTS COLLECTION — Clean Rewrite
 // -------------------------------------------------------------
 const LOCAL_REMOVED_PRODS_KEY = 'sb_removed_products';
-const LOCAL_PRODS_CACHE_KEY = 'sb_cached_products_v2';
+const LOCAL_PRODS_CACHE_KEY = 'sb_cached_products_v3';
 
 /**
- * getProducts() — Returns the full merged product catalog with instant (0ms) local caching.
- * 
- * Sources:
- *   1. LocalStorage Cache (sb_cached_products_v2) — Instant 0ms load
- *   2. Firestore 'products' & 'deleted_products' — Background async hydration
- *   3. DEFAULT_CATALOG_PRODUCTS — Built-in catalog seeds fallback
+ * getProducts() — Returns the full merged product catalog.
+ * Uses 0ms instant local cache when available, backed by async cloud synchronization.
  */
 export async function getProducts(forceRefresh = false) {
   const localList = getLocalData(LOCAL_PRODS_KEY);
   const localRemoved = getLocalData(LOCAL_REMOVED_PRODS_KEY);
   
-  // 1. Instant Cache Layer (0ms render time)
+  // 1. Instant Cache Check (0ms response if cache available)
   const cachedStr = localStorage.getItem(LOCAL_PRODS_CACHE_KEY);
   let cachedList = [];
   if (cachedStr) {
@@ -1023,7 +1019,6 @@ export async function getProducts(forceRefresh = false) {
     } catch (e) {}
   }
 
-  // Helper to build merged product catalog
   const buildMergedList = (fsDocs = [], deletedSet = new Set()) => {
     const map = new Map();
 
@@ -1053,55 +1048,16 @@ export async function getProducts(forceRefresh = false) {
     return Array.from(map.values());
   };
 
-  // If we have cached products, return them IMMEDIATELY and update cache in background
-  if (cachedList.length > 0 && !forceRefresh) {
-    (async () => {
-      if (!db) return;
-      try {
-        const [snapResult, remSnapResult] = await Promise.all([
-          getDocs(collection(db, 'products')).catch(() => null),
-          getDocs(collection(db, 'deleted_products')).catch(() => null)
-        ]);
+  const fetchFromFirestore = async () => {
+    if (!db) return [];
+    const fsDocs = [];
+    const deletedSet = new Set();
+    localRemoved.forEach(k => { if (k) deletedSet.add(String(k).toLowerCase()); });
 
-        const fsDocs = [];
-        const deletedSet = new Set();
-        localRemoved.forEach(k => { if (k) deletedSet.add(String(k).toLowerCase()); });
-
-        if (snapResult && snapResult.forEach) {
-          snapResult.forEach(d => fsDocs.push(d));
-        }
-        if (remSnapResult && remSnapResult.forEach) {
-          remSnapResult.forEach(d => {
-            deletedSet.add(d.id.toLowerCase());
-            const data = d.data();
-            if (data.id) deletedSet.add(String(data.id).toLowerCase());
-          });
-        }
-
-        const freshList = buildMergedList(fsDocs, deletedSet);
-        if (freshList.length > 0) {
-          localStorage.setItem(LOCAL_PRODS_CACHE_KEY, JSON.stringify(freshList));
-        }
-      } catch (e) { }
-    })();
-
-    return cachedList;
-  }
-
-  // First-time load or forced refresh: fetch Firestore with 2.5s parallel timeout
-  let fsDocs = [];
-  const deletedSet = new Set();
-  localRemoved.forEach(k => { if (k) deletedSet.add(String(k).toLowerCase()); });
-
-  if (db) {
     try {
-      const withTimeout = (promise, ms = 2500) => Promise.race([
-        promise,
-        new Promise(resolve => setTimeout(() => resolve(null), ms))
-      ]);
       const [snapResult, remSnapResult] = await Promise.all([
-        withTimeout(getDocs(collection(db, 'products')).catch(() => null)),
-        withTimeout(getDocs(collection(db, 'deleted_products')).catch(() => null))
+        getDocs(collection(db, 'products')).catch(() => null),
+        getDocs(collection(db, 'deleted_products')).catch(() => null)
       ]);
 
       if (snapResult && snapResult.forEach) {
@@ -1115,15 +1071,28 @@ export async function getProducts(forceRefresh = false) {
         });
       }
     } catch (e) {
-      console.warn('Firestore getProducts fetch notice:', e);
+      console.warn('Firestore fetch notice:', e);
     }
+
+    const merged = buildMergedList(fsDocs, deletedSet);
+    if (merged.length > 0) {
+      try { localStorage.setItem(LOCAL_PRODS_CACHE_KEY, JSON.stringify(merged)); } catch(e){}
+    }
+    return merged;
+  };
+
+  // If cache exists and not forcing refresh: return cache INSTANTLY (0ms), update in background
+  if (cachedList.length > 0 && !forceRefresh) {
+    fetchFromFirestore(); // Trigger background sync
+    return cachedList;
   }
 
-  const finalMerged = buildMergedList(fsDocs, deletedSet);
-  if (finalMerged.length > 0) {
-    try { localStorage.setItem(LOCAL_PRODS_CACHE_KEY, JSON.stringify(finalMerged)); } catch(e){}
-  }
-  return finalMerged;
+  // Otherwise (first load or forced refresh), await cloud fetch directly
+  const freshList = await fetchFromFirestore();
+  if (freshList.length > 0) return freshList;
+
+  // Fallback if offline
+  return buildMergedList([], new Set());
 }
 
 // Helper: Compress image data URL to max 400x400
