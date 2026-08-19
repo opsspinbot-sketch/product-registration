@@ -1019,18 +1019,15 @@ export async function getProducts() {
 
   if (db) {
     try {
-      const withTimeout = (promise, ms = 8000) => Promise.race([
-        promise,
-        new Promise(resolve => setTimeout(() => resolve(null), ms))
-      ]);
-      const [snapResult, remSnapResult] = await Promise.all([
-        withTimeout(getDocs(collection(db, 'products')).catch(() => null)),
-        withTimeout(getDocs(collection(db, 'deleted_products')).catch(() => null))
-      ]);
-
+      const snapResult = await getDocs(collection(db, 'products'));
       if (snapResult && snapResult.forEach) {
         snapResult.forEach(d => fsList.push({ ...d.data(), id: d.id }));
       }
+    } catch (e) {
+      console.warn('Firestore products fetch notice:', e);
+    }
+    try {
+      const remSnapResult = await getDocs(collection(db, 'deleted_products'));
       if (remSnapResult && remSnapResult.forEach) {
         remSnapResult.forEach(d => {
           deletedIds.add(d.id.toLowerCase());
@@ -1038,9 +1035,7 @@ export async function getProducts() {
           if (data.id) deletedIds.add(String(data.id).toLowerCase());
         });
       }
-    } catch (e) {
-      console.warn('Firestore getProducts read failed:', e);
-    }
+    } catch (e) { }
   }
 
   // Also add locally-tracked removals
