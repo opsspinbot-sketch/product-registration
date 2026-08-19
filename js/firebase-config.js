@@ -1,6 +1,6 @@
 // Firebase Modular SDK Initialization (Fault-Tolerant & Bulletproof)
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
-import { getFirestore } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+import { getFirestore, initializeFirestore } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 import { getAuth } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
 
 let app = null;
@@ -18,7 +18,13 @@ try {
   };
 
   app = initializeApp(firebaseConfig);
-  db = getFirestore(app);
+  try {
+    db = initializeFirestore(app, {
+      experimentalAutoDetectLongPolling: true
+    });
+  } catch (err) {
+    db = getFirestore(app);
+  }
   auth = getAuth(app);
 } catch (e) {
   console.warn("Firebase CDN unreachable — running local fallback mode:", e);
