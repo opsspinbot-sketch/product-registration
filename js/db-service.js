@@ -1104,6 +1104,7 @@ export async function deleteProduct(id, pObj = null) {
   try {
     const cleanId = String(id).trim();
     const sku = pObj ? String(pObj.sku || '').trim() : '';
+    console.log('[deleteProduct] Deleting:', cleanId, 'SKU:', sku);
 
     // 1. Remove from local storage
     const localList = getLocalData(LOCAL_PRODS_KEY).filter(p => p.id !== cleanId);
@@ -1113,22 +1114,36 @@ export async function deleteProduct(id, pObj = null) {
     saveLocalData(LOCAL_REMOVED_PRODS_KEY, cleanId.toLowerCase());
     if (sku) saveLocalData(LOCAL_REMOVED_PRODS_KEY, sku.toLowerCase());
 
-    // 3. Sync deletion to Firestore
+    // 3. Sync deletion to Firestore (with timeout so UI never hangs)
     if (db) {
+      const safeDocId = cleanId.replace(/[\/\.#$\[\]]/g, '_');
+      const deletionRecord = { id: cleanId, deletedAt: new Date().toISOString() };
+      if (sku) deletionRecord.sku = sku.toLowerCase();
+
       try {
-        const safeDocId = cleanId.replace(/[\/\.#$\[\]]/g, '_');
-        const deletionRecord = { id: cleanId, deletedAt: new Date().toISOString() };
-        if (sku) deletionRecord.sku = sku.toLowerCase();
-        await setDoc(doc(db, 'deleted_products', safeDocId), deletionRecord, { merge: true }).catch(() => {});
-        if (!cleanId.startsWith('prod_') && !cleanId.startsWith('loc_')) {
-          await deleteDoc(doc(db, 'products', cleanId)).catch(() => {});
-        }
+        const setPromise = setDoc(doc(db, 'deleted_products', safeDocId), deletionRecord, { merge: true });
+        const timeout = new Promise((_, reject) => setTimeout(() => reject(new Error('Firestore timeout')), 3000));
+        await Promise.race([setPromise, timeout]);
+        console.log('[deleteProduct] Firestore deleted_products record created:', safeDocId);
       } catch (e) {
-        console.warn('deleteProduct: Firestore sync error:', e.message);
+        console.warn('[deleteProduct] Firestore deleted_products sync skipped:', e.message);
+      }
+
+      // Also delete the actual Firestore product document (only for real Firestore docs)
+      if (!cleanId.startsWith('prod_') && !cleanId.startsWith('loc_')) {
+        try {
+          const delPromise = deleteDoc(doc(db, 'products', cleanId));
+          const timeout2 = new Promise((_, reject) => setTimeout(() => reject(new Error('Firestore timeout')), 3000));
+          await Promise.race([delPromise, timeout2]);
+          console.log('[deleteProduct] Firestore product document deleted:', cleanId);
+        } catch (e) {
+          console.warn('[deleteProduct] Firestore product delete skipped:', e.message);
+        }
       }
     }
+    console.log('[deleteProduct] Done:', cleanId);
   } catch(e) {
-    console.warn('deleteProduct error:', e);
+    console.warn('[deleteProduct] Error:', e);
   }
 }
 
