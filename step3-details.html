@@ -367,6 +367,7 @@
 <script type="module">
   import { showToast } from './js/ui-components.js?v=34.0.0';
   import { createWarrantyRegistration, getTermsAndConditions, getMarketplaces } from './js/db-service.js?v=34.0.0';
+  import { saveCustomerSession } from './js/auth-service.js?v=34.0.0';
   import { uploadToR2 } from './js/r2-upload.js?v=34.0.0';
 
   async function initMarketplacesSelect() {
@@ -558,6 +559,15 @@
         warrantyPeriod: `${parsedMonths} Months`,
         invoiceUrl
       }, selectedFile);
+
+      // Save customer session so profile page displays this registration immediately
+      saveCustomerSession({
+        uid: custUid || reg.warrantyId,
+        fullName,
+        name: fullName,
+        email,
+        phone
+      });
 
       showToast('Product registered successfully!', 'success');
       setTimeout(() => window.location.href = `success.html?id=${encodeURIComponent(reg.warrantyId || 'SB-REG')}`, 600);

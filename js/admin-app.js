@@ -1238,10 +1238,12 @@ function renderRegistrationsView() {
   if (state.filters.search) {
     const q = state.filters.search.toLowerCase();
     list = list.filter(r => 
-      (r.warrantyId && r.warrantyId.toLowerCase().includes(q)) ||
-      r.fullName.toLowerCase().includes(q) ||
-      r.product.toLowerCase().includes(q) ||
-      (r.sku && r.sku.toLowerCase().includes(q))
+      (r.warrantyId && String(r.warrantyId).toLowerCase().includes(q)) ||
+      (r.fullName && String(r.fullName).toLowerCase().includes(q)) ||
+      (r.email && String(r.email).toLowerCase().includes(q)) ||
+      (r.phone && String(r.phone).toLowerCase().includes(q)) ||
+      (r.product && String(r.product).toLowerCase().includes(q)) ||
+      (r.sku && String(r.sku).toLowerCase().includes(q))
     );
   }
 

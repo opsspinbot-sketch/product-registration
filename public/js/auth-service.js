@@ -234,14 +234,33 @@ export function getCustomerSession() {
     const session = sessionStorage.getItem(LOCAL_CUSTOMER_KEY) || localStorage.getItem(LOCAL_CUSTOMER_KEY);
     if (session) return JSON.parse(session);
   } catch (e) {}
+
+  // Fallback: Reconstruct session from saved customer details if available
+  try {
+    const email = sessionStorage.getItem('sb_customer_email') || localStorage.getItem('sb_customer_email');
+    const phone = sessionStorage.getItem('sb_customer_phone') || localStorage.getItem('sb_customer_phone');
+    const name = sessionStorage.getItem('sb_customer_name') || localStorage.getItem('sb_customer_name');
+    if (email || phone || name) {
+      const fallback = {
+        name: name || 'SpinBot Customer',
+        fullName: name || 'SpinBot Customer',
+        email: email || '',
+        phone: phone || '',
+        uid: 'cust_' + (phone || email || 'guest')
+      };
+      saveCustomerSession(fallback);
+      return fallback;
+    }
+  } catch (e) {}
   return null;
 }
 
 export function saveCustomerSession(profile) {
+  if (!profile) return;
   try {
     sessionStorage.setItem(LOCAL_CUSTOMER_KEY, JSON.stringify(profile));
     localStorage.setItem(LOCAL_CUSTOMER_KEY, JSON.stringify(profile));
-    // Also save default name and email for registration forms
+    // Also save default name, email, phone for registration forms & profile matching
     if (profile.fullName || profile.name) {
       sessionStorage.setItem('sb_customer_name', profile.fullName || profile.name);
       localStorage.setItem('sb_customer_name', profile.fullName || profile.name);
@@ -249,6 +268,10 @@ export function saveCustomerSession(profile) {
     if (profile.email) {
       sessionStorage.setItem('sb_customer_email', profile.email);
       localStorage.setItem('sb_customer_email', profile.email);
+    }
+    if (profile.phone) {
+      sessionStorage.setItem('sb_customer_phone', profile.phone);
+      localStorage.setItem('sb_customer_phone', profile.phone);
     }
   } catch (e) {}
 }

@@ -604,10 +604,19 @@
     // Load Customer Devices (Strictly match UID or Email)
     try {
       const allRegs = await getRegistrations();
+      const custEmail = (email || '').toLowerCase().trim();
+      const custPhone = (activeCustomer.phone || activeCustomer.customerPhone || '').replace(/\D/g, '').trim();
+
       const userRegs = allRegs.filter(r => {
-        const matchUid = (r.customerUid && userUid && r.customerUid === userUid) || (r.googleUid && activeCustomer.googleUid && r.googleUid === activeCustomer.googleUid);
-        const matchEmail = r.email && email && r.email.toLowerCase().trim() === email.toLowerCase().trim();
-        return matchUid || matchEmail;
+        const rEmail = (r.email || '').toLowerCase().trim();
+        const rPhone = (r.phone || r.customerPhone || '').replace(/\D/g, '').trim();
+
+        const matchUid = (r.customerUid && userUid && r.customerUid === userUid) || 
+                         (r.googleUid && activeCustomer.googleUid && r.googleUid === activeCustomer.googleUid);
+        const matchEmail = custEmail && rEmail && rEmail === custEmail;
+        const matchPhone = custPhone && rPhone && (custPhone === rPhone || (custPhone.length >= 10 && rPhone.endsWith(custPhone.slice(-10))));
+
+        return matchUid || matchEmail || matchPhone;
       });
 
       document.getElementById('statDevicesCount').innerText = userRegs.length;
