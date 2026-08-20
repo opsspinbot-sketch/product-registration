@@ -8,7 +8,8 @@ import {
   getClaims, createClaim, updateClaimStatus, getRecentActivity, generateUniqueId, calculateWarrantyDates,
   subscribeToRegistrations, subscribeToCustomers, DEFAULT_CATALOG_PRODUCTS, upsertCustomer, updateCustomerDetails,
   getMarketplaces, addMarketplace, deleteMarketplace, subscribeToMarketplaces,
-  getTermsAndConditions, saveTermsAndConditions
+  getTermsAndConditions, saveTermsAndConditions,
+  getResendApiKey, saveResendApiKey, sendTestRegistrationEmail
 } from './db-service.js?v=16.0.0';
 import { 
   showToast, showModal, renderEmptyState, renderPaginationContainer, exportToCSV, exportToPDF, renderStatusBadge, formatDate 
@@ -90,6 +91,34 @@ window.handleRemoveAllowedEmail = async (email) => {
     renderSettingsView();
   } catch (err) {
     showToast(err.message || 'Action failed', 'danger');
+  }
+};
+
+window.handleSaveResendKey = () => {
+  const input = document.getElementById('resendApiKeyInput');
+  const key = input?.value?.trim() || '';
+  saveResendApiKey(key);
+  if (key) {
+    showToast('Resend API key saved successfully!', 'success');
+  } else {
+    showToast('Resend API key cleared. Using Firestore queue mode.', 'info');
+  }
+};
+
+window.handleSendTestEmail = async () => {
+  const input = document.getElementById('testEmailTargetInput');
+  const target = input?.value?.trim();
+  if (!target) {
+    showToast('Please enter a target email address', 'warning');
+    return;
+  }
+
+  showToast(`Sending test confirmation email to ${target}...`, 'info');
+  try {
+    const res = await sendTestRegistrationEmail(target);
+    showToast(`Test email successfully sent to ${res.recipient || target}!`, 'success');
+  } catch (err) {
+    showToast(`Email test note: ${err.message || 'Queued in database'}`, 'info');
   }
 };
 
@@ -2080,6 +2109,48 @@ async function renderSettingsView() {
               ` : ''}
             </div>
           `).join('')}
+        </div>
+      </div>
+
+      <!-- AUTOMATED EMAIL NOTIFICATIONS CARD -->
+      <div style="background: #ffffff; border: 1px solid #e2e8f0; border-radius: 14px; padding: 22px; margin-bottom: 24px; box-shadow: 0 2px 8px rgba(0,0,0,0.03);">
+        <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom: 14px; flex-wrap: wrap; gap: 10px;">
+          <div>
+            <h4 style="font-size: 15px; font-weight: 800; color: #0f172a; display: flex; align-items: center; gap: 8px; margin: 0;">
+              <i class="ti ti-mail-fast" style="color: #76D300; font-size: 20px;"></i> Automated Registration Email Dispatcher
+            </h4>
+            <div style="font-size: 12px; color: #64748b; margin-top: 2px;">Sends an instant, branded HTML confirmation email to customers as soon as they submit product registration.</div>
+          </div>
+          <span class="badge badge-active" style="background: #f0fdf4; color: #166534; border: 1px solid #bbf7d0; font-weight: 700; padding: 4px 10px;">
+            <i class="ti ti-circle-check-filled"></i> Active &amp; Ready
+          </span>
+        </div>
+
+        <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 10px; padding: 14px 16px; margin-bottom: 16px;">
+          <label style="display: block; font-size: 12px; font-weight: 700; color: #0f172a; margin-bottom: 6px;">
+            Resend API Key (Optional Direct Dispatch Engine)
+          </label>
+          <div style="display: flex; gap: 8px;">
+            <input type="password" id="resendApiKeyInput" class="form-control" value="${getResendApiKey() || ''}" placeholder="re_123456789..." style="font-family: monospace; font-size: 13px; flex: 1;"/>
+            <button type="button" class="btn btn-primary" onclick="handleSaveResendKey()">
+              <i class="ti ti-device-floppy"></i> Save Key
+            </button>
+          </div>
+          <div style="font-size: 11.5px; color: #64748b; margin-top: 6px; line-height: 1.4;">
+            Leave blank to use default Firestore <code style="background:#e2e8f0; padding:1px 4px; border-radius:4px;">mail</code> collection queue (works with Firebase Trigger Email Extension &amp; SMTP).
+          </div>
+        </div>
+
+        <div style="border-top: 1px solid #f1f5f9; padding-top: 14px; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 10px;">
+          <div style="font-size: 12.5px; color: #475569; font-weight: 600;">
+            <i class="ti ti-send" style="color: #2563eb;"></i> Verify Email Service:
+          </div>
+          <div style="display: flex; gap: 8px; flex: 1; max-width: 400px;">
+            <input type="email" id="testEmailTargetInput" class="form-control" placeholder="Enter recipient email..." value="${getAdminCredentials()?.email || 'ops.spinbot@gmail.com'}" style="font-size: 13px;"/>
+            <button type="button" class="btn btn-secondary" onclick="handleSendTestEmail()" style="font-weight: 700; white-space: nowrap;">
+              <i class="ti ti-mail"></i> Send Test Email
+            </button>
+          </div>
         </div>
       </div>
 

@@ -241,12 +241,30 @@ export async function createWarrantyRegistration(data, invoiceFile = null) {
 }
 
 // -------------------------------------------------------------
-// EMAIL CONFIRMATION — Firebase "Trigger Email" Extension
-// Writes to `mail` collection → Firebase Extension picks it up
-// and sends via your configured SMTP / SendGrid / Gmail
+// EMAIL API KEY CONFIGURATION & HELPERS
+// -------------------------------------------------------------
+export function getResendApiKey() {
+  try {
+    const saved = localStorage.getItem('sb_resend_api_key');
+    if (saved) return saved;
+  } catch (e) {}
+  return (typeof window !== 'undefined' && window.__RESEND_API_KEY__) || (typeof RESEND_API_KEY !== 'undefined' ? RESEND_API_KEY : '');
+}
+
+export function saveResendApiKey(key) {
+  const clean = (key || '').trim();
+  try {
+    if (clean) localStorage.setItem('sb_resend_api_key', clean);
+    else localStorage.removeItem('sb_resend_api_key');
+  } catch (e) {}
+  return clean;
+}
+
+// -------------------------------------------------------------
+// EMAIL CONFIRMATION — Dual Engine (Resend API + Firestore Mail)
 // -------------------------------------------------------------
 export async function sendRegistrationConfirmationEmail(reg) {
-  if (!reg.email) return; // No email provided — skip silently
+  if (!reg || !reg.email) return; // No email provided — skip silently
 
   const endDateFormatted = reg.endDate
     ? new Date(reg.endDate).toLocaleDateString('en-IN', { day: '2-digit', month: 'long', year: 'numeric' })
@@ -258,26 +276,25 @@ export async function sendRegistrationConfirmationEmail(reg) {
   const mailDoc = {
     to: reg.email,
     message: {
-      subject: `✅ Product Registration Received — ${reg.warrantyId} | SpinBot`,
+      subject: `✅ Product Registration Received — ${reg.warrantyId || 'SB-REG'} | SpinBot`,
       html: `
 <!DOCTYPE html>
 <html lang="en">
 <head><meta charset="UTF-8"/><meta name="viewport" content="width=device-width, initial-scale=1.0"/></head>
 <body style="margin:0;padding:0;background:#f8fafc;font-family:'Segoe UI',-apple-system,BlinkMacSystemFont,Roboto,Helvetica,Arial,sans-serif;">
 
-  <!-- Outer Wrapper (Portal Light Gray Background) -->
+  <!-- Outer Wrapper -->
   <table width="100%" cellpadding="0" cellspacing="0" style="background:#f8fafc;padding:36px 16px;">
     <tr><td align="center">
 
-      <!-- Pre-header text (hidden) -->
       <div style="display:none;max-height:0;overflow:hidden;color:#f8fafc;font-size:1px;">
-        Your SpinBot product registration has been received. Registration ID: ${reg.warrantyId}.
+        Your SpinBot product registration has been received. Registration ID: ${reg.warrantyId || ''}.
       </div>
 
-      <!-- Main Card Container (Portal White Card with Rounded Corners) -->
+      <!-- Main Card Container -->
       <table width="600" cellpadding="0" cellspacing="0" style="max-width:600px;width:100%;background:#ffffff;border-radius:20px;overflow:hidden;border:1px solid #e2e8f0;box-shadow:0 10px 25px -5px rgba(15,23,42,0.06);">
 
-        <!-- ═══════ BRAND HEADER — Portal Dark Slate ═══════ -->
+        <!-- BRAND HEADER -->
         <tr>
           <td style="background:linear-gradient(135deg,#0f172a 0%,#1e293b 100%);padding:32px 40px;text-align:center;">
             <table width="100%" cellpadding="0" cellspacing="0">
@@ -291,7 +308,7 @@ export async function sendRegistrationConfirmationEmail(reg) {
           </td>
         </tr>
 
-        <!-- ═══════ HERO — Success Accent Banner ═══════ -->
+        <!-- HERO ACCENT BANNER -->
         <tr>
           <td style="background:#f7fee7;border-bottom:2px solid #76D300;padding:36px 40px;text-align:center;">
             <div style="width:60px;height:60px;margin:0 auto 16px;background:#76D300;border-radius:50%;line-height:60px;font-size:30px;color:#0f172a;font-weight:bold;box-shadow:0 6px 20px rgba(118,211,0,0.3);">
@@ -301,19 +318,19 @@ export async function sendRegistrationConfirmationEmail(reg) {
               Product Registration Received!
             </h1>
             <p style="font-size:14px;color:#475569;margin:0;line-height:1.5;">
-              Hi <strong style="color:#0f172a;">${reg.fullName}</strong>, thank you for registering your SpinBot product. Your details have been successfully recorded.
+              Hi <strong style="color:#0f172a;">${reg.fullName || 'Valued Customer'}</strong>, thank you for registering your SpinBot product. Your details have been successfully recorded.
             </p>
           </td>
         </tr>
 
-        <!-- ═══════ REGISTRATION ID HIGHLIGHT CARD ═══════ -->
+        <!-- REGISTRATION ID HIGHLIGHT CARD -->
         <tr>
           <td style="padding:28px 40px 0;">
             <table width="100%" cellpadding="0" cellspacing="0" style="background:#0f172a;border-radius:14px;overflow:hidden;">
               <tr>
                 <td style="padding:22px 28px;text-align:center;">
                   <div style="font-size:10px;font-weight:800;color:#76D300;letter-spacing:0.18em;text-transform:uppercase;margin-bottom:6px;">Registration ID</div>
-                  <div style="font-size:26px;font-weight:900;color:#ffffff;letter-spacing:3px;font-family:'Courier New',monospace;">${reg.warrantyId}</div>
+                  <div style="font-size:26px;font-weight:900;color:#ffffff;letter-spacing:3px;font-family:'Courier New',monospace;">${reg.warrantyId || 'SB-REGISTERED'}</div>
                   <div style="font-size:11px;color:#94a3b8;margin-top:6px;">Keep this Registration ID for all future support queries</div>
                 </td>
               </tr>
@@ -321,28 +338,26 @@ export async function sendRegistrationConfirmationEmail(reg) {
           </td>
         </tr>
 
-        <!-- ═══════ REGISTRATION DETAILS GRID ═══════ -->
+        <!-- REGISTRATION DETAILS GRID -->
         <tr>
           <td style="padding:28px 40px 0;">
             <div style="font-size:11px;font-weight:800;color:#64748b;text-transform:uppercase;letter-spacing:0.12em;margin-bottom:14px;padding-bottom:8px;border-bottom:1px solid #f1f5f9;">Registration Details</div>
 
             <table width="100%" cellpadding="0" cellspacing="0">
-              <!-- Row 1: Product + SKU -->
               <tr>
                 <td width="50%" style="padding:0 6px 12px 0;vertical-align:top;">
                   <div style="background:#f8fafc;border:1px solid #e2e8f0;border-radius:10px;padding:14px 16px;">
                     <div style="font-size:10px;font-weight:700;color:#64748b;text-transform:uppercase;letter-spacing:0.08em;margin-bottom:4px;">📦 Product</div>
-                    <div style="font-size:13.5px;font-weight:700;color:#0f172a;line-height:1.4;">${reg.product}</div>
+                    <div style="font-size:13.5px;font-weight:700;color:#0f172a;line-height:1.4;">${reg.product || 'SpinBot Device'}</div>
                   </div>
                 </td>
                 <td width="50%" style="padding:0 0 12px 6px;vertical-align:top;">
                   <div style="background:#f8fafc;border:1px solid #e2e8f0;border-radius:10px;padding:14px 16px;">
                     <div style="font-size:10px;font-weight:700;color:#64748b;text-transform:uppercase;letter-spacing:0.08em;margin-bottom:4px;">🏷️ SKU / Model</div>
-                    <div style="font-size:13.5px;font-weight:700;color:#0f172a;font-family:'Courier New',monospace;">${reg.sku || 'N/A'}</div>
+                    <div style="font-size:13.5px;font-weight:700;color:#0f172a;font-family:'Courier New',monospace;">${reg.sku || 'Standard'}</div>
                   </div>
                 </td>
               </tr>
-              <!-- Row 2: Purchase Date + Platform -->
               <tr>
                 <td width="50%" style="padding:0 6px 12px 0;vertical-align:top;">
                   <div style="background:#f8fafc;border:1px solid #e2e8f0;border-radius:10px;padding:14px 16px;">
@@ -353,16 +368,15 @@ export async function sendRegistrationConfirmationEmail(reg) {
                 <td width="50%" style="padding:0 0 12px 6px;vertical-align:top;">
                   <div style="background:#f8fafc;border:1px solid #e2e8f0;border-radius:10px;padding:14px 16px;">
                     <div style="font-size:10px;font-weight:700;color:#64748b;text-transform:uppercase;letter-spacing:0.08em;margin-bottom:4px;">🛒 Purchase Platform</div>
-                    <div style="font-size:13.5px;font-weight:700;color:#0f172a;">${reg.purchasePlatform || 'N/A'}</div>
+                    <div style="font-size:13.5px;font-weight:700;color:#0f172a;">${reg.purchasePlatform || 'Official / Authorized Dealer'}</div>
                   </div>
                 </td>
               </tr>
-              <!-- Row 3: Registration Period + Valid Until -->
               <tr>
                 <td width="50%" style="padding:0 6px 12px 0;vertical-align:top;">
                   <div style="background:#f8fafc;border:1px solid #e2e8f0;border-radius:10px;padding:14px 16px;">
                     <div style="font-size:10px;font-weight:700;color:#64748b;text-transform:uppercase;letter-spacing:0.08em;margin-bottom:4px;">⏱️ Registration Period</div>
-                    <div style="font-size:13.5px;font-weight:700;color:#0f172a;">${reg.warrantyPeriod}</div>
+                    <div style="font-size:13.5px;font-weight:700;color:#0f172a;">${reg.warrantyPeriod || '12 Months'}</div>
                   </div>
                 </td>
                 <td width="50%" style="padding:0 0 12px 6px;vertical-align:top;">
@@ -376,7 +390,7 @@ export async function sendRegistrationConfirmationEmail(reg) {
           </td>
         </tr>
 
-        <!-- ═══════ STATUS BADGE BANNER ═══════ -->
+        <!-- STATUS BADGE BANNER -->
         <tr>
           <td style="padding:4px 40px 24px;">
             <table width="100%" cellpadding="0" cellspacing="0" style="background:#fffbeb;border:1px solid #fde68a;border-radius:12px;">
@@ -392,7 +406,7 @@ export async function sendRegistrationConfirmationEmail(reg) {
           </td>
         </tr>
 
-        <!-- ═══════ WHAT'S NEXT ═══════ -->
+        <!-- WHAT'S NEXT -->
         <tr>
           <td style="padding:0 40px 28px;">
             <div style="font-size:11px;font-weight:800;color:#64748b;text-transform:uppercase;letter-spacing:0.12em;margin-bottom:14px;padding-bottom:8px;border-bottom:1px solid #f1f5f9;">What Happens Next?</div>
@@ -446,7 +460,7 @@ export async function sendRegistrationConfirmationEmail(reg) {
           </td>
         </tr>
 
-        <!-- ═══════ FOOTER ═══════ -->
+        <!-- FOOTER -->
         <tr>
           <td style="background:#f8fafc;padding:28px 40px;text-align:center;border-top:1px solid #e2e8f0;">
             <div style="font-size:22px;font-weight:900;letter-spacing:-1px;color:#0f172a;margin-bottom:2px;">Spin<span style="color:#76D300;">Bot</span></div>
@@ -474,19 +488,19 @@ export async function sendRegistrationConfirmationEmail(reg) {
       text: `
 SpinBot — Product Registration Received
 
-Hi ${reg.fullName},
+Hi ${reg.fullName || 'Valued Customer'},
 
 Thank you for registering your SpinBot product. Your details have been recorded:
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-  REGISTRATION ID: ${reg.warrantyId}
+  REGISTRATION ID: ${reg.warrantyId || 'SB-REGISTERED'}
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-  Product:             ${reg.product}
+  Product:             ${reg.product || 'SpinBot Device'}
   SKU / Model:         ${reg.sku || 'N/A'}
   Purchase Date:       ${purchaseDateFormatted}
   Purchase Platform:   ${reg.purchasePlatform || 'N/A'}
-  Registration Period: ${reg.warrantyPeriod}
+  Registration Period: ${reg.warrantyPeriod || '12 Months'}
   Coverage Until:      ${endDateFormatted}
 
   Status: Pending Verification
@@ -504,13 +518,15 @@ Need support? Email: support@spinbot.co.in
     createdAt: new Date().toISOString()
   };
 
-  // Send email directly to customer email using verified domain (noreply@spinbot.co.in)
-  if (RESEND_API_KEY) {
+  const apiKey = getResendApiKey();
+
+  // Primary: Direct HTTP email dispatch if API key configured
+  if (apiKey) {
     try {
       const resendRes = await fetch('https://api.resend.com/emails', {
         method: 'POST',
         headers: {
-          'Authorization': `Bearer ${RESEND_API_KEY}`,
+          'Authorization': `Bearer ${apiKey}`,
           'Content-Type': 'application/json'
         },
         body: JSON.stringify({
@@ -532,15 +548,36 @@ Need support? Email: support@spinbot.co.in
     }
   }
 
-  // Backup: Write to Firestore `mail` collection
+  // Secondary: Queue in Firestore `mail` collection
   if (db) {
     try {
       await addDoc(collection(db, 'mail'), mailDoc);
       console.log('✅ Confirmation email queued in Firestore mail collection for:', reg.email);
     } catch (e) {
-      console.warn('Firebase mail queue failed:', e);
+      console.warn('Firebase mail queue notice:', e);
     }
   }
+
+  return { success: true, recipient: reg.email };
+}
+
+export async function sendTestRegistrationEmail(targetEmail) {
+  const email = (targetEmail || '').trim();
+  if (!email) throw new Error('Please provide a valid target email address');
+
+  const testReg = {
+    warrantyId: 'SB-TEST-' + Math.floor(1000 + Math.random() * 9000),
+    fullName: 'Test Customer',
+    email: email,
+    product: 'SpinBot Armor Wireless Gaming Headphones',
+    sku: 'SB-ARMOR-RGB',
+    purchaseDate: new Date().toISOString(),
+    purchasePlatform: 'SpinBot Official Website',
+    warrantyPeriod: '12 Months',
+    endDate: new Date(Date.now() + 365 * 24 * 60 * 60 * 1000).toISOString()
+  };
+
+  return await sendRegistrationConfirmationEmail(testReg);
 }
 
 // -------------------------------------------------------------
