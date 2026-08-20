@@ -323,14 +323,16 @@ function initAdminUI(session) {
 }
 
 window.handleLoginSubmit = async (e) => {
-  e.preventDefault();
-  const email = document.getElementById('loginEmail').value.trim();
-  const pass = document.getElementById('loginPass').value;
+  if (e && e.preventDefault) e.preventDefault();
+  const email = document.getElementById('loginEmail')?.value?.trim();
+  const pass = document.getElementById('loginPass')?.value?.trim();
   const loginBtn = document.getElementById('loginBtn');
   const errDiv = document.getElementById('loginError');
 
-  loginBtn.disabled = true;
-  loginBtn.innerHTML = '<i class="ti ti-loader spin"></i> Authenticating...';
+  if (loginBtn) {
+    loginBtn.disabled = true;
+    loginBtn.innerHTML = '<i class="ti ti-loader spin"></i> Authenticating...';
+  }
   if (errDiv) errDiv.style.display = 'none';
 
   try {
@@ -344,8 +346,10 @@ window.handleLoginSubmit = async (e) => {
     } else {
       showToast(err.message || 'Access Denied!', 'danger');
     }
-    loginBtn.disabled = false;
-    loginBtn.innerHTML = 'Sign In to Product Registration Admin <i class="ti ti-arrow-right"></i>';
+    if (loginBtn) {
+      loginBtn.disabled = false;
+      loginBtn.innerHTML = 'Sign In to Console';
+    }
   }
 };
 
